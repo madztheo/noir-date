@@ -16,12 +16,6 @@ fn number_to_utf8_code(number: u8) -> u8 {
     number + 48
 }
 
-fn modulo(number: u32, modulo: u32) -> u32 {
-    let quotient = number / modulo;
-    let remainder = number - quotient * modulo;
-    remainder
-}
-
 impl Date {
     pub fn new(year: u16, month: u8, day: u8) -> Self {
         assert(month >= 1 & month <= 12);
