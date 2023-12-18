@@ -1,3 +1,5 @@
+use dep::std::println;
+
 struct Date {
     day: u8,
     month: u8,
@@ -14,13 +16,23 @@ fn number_to_utf8_code(number: u8) -> u8 {
     number + 48
 }
 
+fn modulo(number: u32, modulo: u32) -> u32 {
+    let quotient = number / modulo;
+    let remainder = number - quotient * modulo;
+    remainder
+}
+
 impl Date {
     pub fn new(year: u16, month: u8, day: u8) -> Self {
-        Self {
+        assert(month >= 1 & month <= 12);
+        assert(day >= 1 & day <= 31);
+        let date = Self {
             day: day,
             month: month,
             year: year,
-        }
+        };
+        assert(day <= date.get_days_in_month(month));
+        date
     }
 
     pub fn from_bytes_short_year(date: [u8; 6], threshold_year: [u8; 2]) -> Self {
@@ -98,11 +110,11 @@ impl Date {
     }
 
     fn get_duration_in_days(self: Self, other: Self, absolute: bool) -> i32 {
-        let totalDuration: i32 = (self.year as i32 - other.year as i32) * 365
-        + (self.month as i32 - other.month as i32) * 30
+        let totalDuration: i32 = self.get_duration_between_years(other) as i32 
+        + self.get_duration_between_months(other) as i32
         + (self.day as i32 - other.day as i32);
 
-        if totalDuration < 0 & absolute {
+        if (totalDuration < 0) & absolute {
             -1 * totalDuration
         }
 
@@ -163,5 +175,64 @@ impl Date {
         date[7] = number_to_utf8_code(secondDayDigit as u8);
 
         date
+    }
+
+    fn is_leap_year(self: Self) -> bool {
+        self.year % 4 == 0
+    }
+
+    fn get_days_in_month(self: Self, month: u8) -> u8 {
+        assert(month >= 1 & month <= 12);
+        if month == 2 {
+            if self.is_leap_year() {
+                29
+            } else {
+                28
+            }
+        } else {
+            if (month == 1) | (month == 3) | (month == 5) | (month == 7) | (month == 8) | (month == 10) | (month == 12) {
+                31
+            } else {
+                30
+            }
+        }
+    }
+
+    fn get_duration_between_months(self: Self, other: Self) -> i32 {
+        assert(self.month >= 1 & self.month <= 12);
+        assert(other.month >= 1 & other.month <= 12);
+        let mut duration: i32 = 0;
+        if(self.month < other.month) {
+            for month in self.month..other.month {
+                duration -= other.get_days_in_month(month) as i32;
+            }
+        } else {
+            for month in other.month..self.month {
+                duration += self.get_days_in_month(month) as i32;
+            }
+        }
+        duration
+    }
+
+    fn get_duration_between_years(self: Self, other: Self) -> i32 {
+        let mut duration: i32 = 0;
+        if(self.year < other.year) {
+            for year in self.year..other.year {
+                if Date::new(year as u16, 1, 1).is_leap_year() {
+                    duration -= 366;
+                } else {
+                    duration -= 365;
+                }
+            }
+        } else {
+            for year in other.year..self.year {
+                if Date::new(year as u16, 1, 1).is_leap_year() {
+                    duration += 366;
+                } else {
+                    duration += 365;
+                }
+            }
+        }
+        duration
     }
 }
