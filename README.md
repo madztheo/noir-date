@@ -45,7 +45,7 @@ let date2 = Date::new(2023, 12, 20);
 
 // Will return 79
 // date2 - date1
-let duration = date2.duration(date1);
+let duration = date2.get_duration_in_days(date1, false);
 ```
 
 ## Notes
