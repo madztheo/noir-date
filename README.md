@@ -23,7 +23,7 @@ use dep::date::Date;
 
 ## Usage
 
-### Initiaze a Date
+### Initialize a Date
 
 ```rust
 // December 19, 2023
