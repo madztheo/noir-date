@@ -230,3 +230,159 @@ impl Date {
         duration
     }
 }
+
+#[test]
+fn test_date_init() {
+    let date = Date::new(2023, 12, 19);
+
+    assert(date.day == 19);
+    assert(date.month == 12);
+    assert(date.year == 2023);
+}
+
+#[test]
+fn test_date_from_bytes_short_year() {
+    let date = Date::from_bytes_short_year([50, 51, 49, 50, 49, 57], [50, 52]);
+
+    assert(date.day == 19);
+    assert(date.month == 12);
+    assert(date.year == 2023);
+}
+
+#[test]
+fn test_date_from_bytes_long_year() {
+    let date = Date::from_bytes_long_year([50, 48, 50, 51, 49, 50, 49, 57]);
+
+    assert(date.day == 19);
+    assert(date.month == 12);
+    assert(date.year == 2023);
+}
+
+#[test]
+fn test_date_from_str_short_year() {
+    let date = Date::from_str_short_year("231219", "24");
+
+    assert(date.day == 19);
+    assert(date.month == 12);
+    assert(date.year == 2023);
+}
+
+#[test]
+fn test_date_from_str_long_year() {
+    let date = Date::from_str_long_year("20231219");
+
+    assert(date.day == 19);
+    assert(date.month == 12);
+    assert(date.year == 2023);
+}
+
+#[test]
+fn test_date_to_bytes() {
+    let date = Date::new(2023, 12, 19);
+
+    let date_bytes = date.to_bytes();
+
+    assert(date_bytes[0] == 50);
+    assert(date_bytes[1] == 48);
+    assert(date_bytes[2] == 50);
+    assert(date_bytes[3] == 51);
+    assert(date_bytes[4] == 49);
+    assert(date_bytes[5] == 50);
+    assert(date_bytes[6] == 49);
+    assert(date_bytes[7] == 57);
+}
+
+#[test]
+fn test_date_is_leap_year() {
+    let date = Date::new(2023, 12, 19);
+
+    assert(date.is_leap_year() == false);
+
+    let date = Date::new(2024, 12, 19);
+
+    assert(date.is_leap_year() == true);
+}
+
+#[test]
+fn test_date_get_days_in_month() {
+    let date = Date::new(2023, 1, 1);
+
+    assert(date.get_days_in_month(1) == 31);
+    assert(date.get_days_in_month(2) == 28);
+    assert(date.get_days_in_month(3) == 31);
+    assert(date.get_days_in_month(4) == 30);
+    assert(date.get_days_in_month(5) == 31);
+    assert(date.get_days_in_month(6) == 30);
+    assert(date.get_days_in_month(7) == 31);
+    assert(date.get_days_in_month(8) == 31);
+    assert(date.get_days_in_month(9) == 30);
+    assert(date.get_days_in_month(10) == 31);
+    assert(date.get_days_in_month(11) == 30);
+    assert(date.get_days_in_month(12) == 31);
+
+    let date = Date::new(2024, 1, 1);
+
+    assert(date.get_days_in_month(1) == 31);
+    assert(date.get_days_in_month(2) == 29);
+    assert(date.get_days_in_month(3) == 31);
+    assert(date.get_days_in_month(4) == 30);
+    assert(date.get_days_in_month(5) == 31);
+    assert(date.get_days_in_month(6) == 30);
+    assert(date.get_days_in_month(7) == 31);
+    assert(date.get_days_in_month(8) == 31);
+    assert(date.get_days_in_month(9) == 30);
+    assert(date.get_days_in_month(10) == 31);
+    assert(date.get_days_in_month(11) == 30);
+    assert(date.get_days_in_month(12) == 31);
+}
+
+#[test]
+fn test_date_get_duration_between_months() {
+    let date = Date::new(2023, 1, 1);
+
+    assert(Date::new(2023, 1, 1).get_duration_between_months(date) == 0);
+    assert(Date::new(2023, 2, 1).get_duration_between_months(date) == 31);
+    assert(Date::new(2023, 3, 1).get_duration_between_months(date) == 59);
+    assert(Date::new(2023, 4, 1).get_duration_between_months(date) == 90);
+    assert(Date::new(2023, 5, 1).get_duration_between_months(date) == 120);
+    assert(Date::new(2023, 6, 1).get_duration_between_months(date) == 151);
+    assert(Date::new(2023, 7, 1).get_duration_between_months(date) == 181);
+    assert(Date::new(2023, 8, 1).get_duration_between_months(date) == 212);
+    assert(Date::new(2023, 9, 1).get_duration_between_months(date) == 243);
+    assert(Date::new(2023, 10, 1).get_duration_between_months(date) == 273);
+    assert(Date::new(2023, 11, 1).get_duration_between_months(date) == 304);
+    assert(Date::new(2023, 12, 1).get_duration_between_months(date) == 334);
+}
+
+#[test]
+fn test_date_get_duration_between_years() {
+    let date = Date::new(2023, 1, 1);
+
+    assert(Date::new(2023, 1, 1).get_duration_between_years(date) == 0);
+    assert(Date::new(2024, 1, 1).get_duration_between_years(date) == 365);
+    assert(Date::new(2025, 1, 1).get_duration_between_years(date) == 731);
+    assert(Date::new(2026, 1, 1).get_duration_between_years(date) == 1096);
+    assert(Date::new(2027, 1, 1).get_duration_between_years(date) == 1461);
+    assert(Date::new(2028, 1, 1).get_duration_between_years(date) == 1826);
+    assert(Date::new(2029, 1, 1).get_duration_between_years(date) == 2192);
+    assert(Date::new(2030, 1, 1).get_duration_between_years(date) == 2557);
+    assert(Date::new(2031, 1, 1).get_duration_between_years(date) == 2922);
+    assert(Date::new(2032, 1, 1).get_duration_between_years(date) == 3287);
+    assert(Date::new(2033, 1, 1).get_duration_between_years(date) == 3653);
+    assert(Date::new(2034, 1, 1).get_duration_between_years(date) == 4018);
+}
+
+#[test]
+fn test_date_get_duration_in_days() {
+    let date = Date::new(2023, 1, 1);
+
+    assert(Date::new(2023, 1, 1).get_duration_in_days(date, false) == 0);
+    assert(Date::new(2023, 1, 15).get_duration_in_days(date, false) == 14);
+    assert(Date::new(2023, 2, 1).get_duration_in_days(date, false) == 31);
+    assert(Date::new(2023, 2, 15).get_duration_in_days(date, false) == 45);
+    assert(Date::new(2023, 3, 1).get_duration_in_days(date, false) == 59);
+    assert(Date::new(2023, 12, 31).get_duration_in_days(date, false) == 364);
+    assert(Date::new(2024, 1, 1).get_duration_in_days(date, false) == 365);
+    assert(Date::new(2024, 12, 31).get_duration_in_days(date, false) == 365 + 365);
+    assert(Date::new(2025, 1, 1).get_duration_in_days(date, false) == 365 + 366);
+}

@@ -10,7 +10,7 @@ In your Nargo.toml file, add the following dependency:
 
 ```
 [dependencies]
-date = { tag = "main", git = "https://github.com/madztheo/noir-date.git", directory = "crates/date" }
+date = { tag = "main", git = "https://github.com/madztheo/noir-date.git" }
 ```
 
 ## Notes
