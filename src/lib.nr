@@ -124,11 +124,11 @@ impl Date {
     }
 
     fn eq(self: Self, other: Self) -> bool {
-        self.get_duration_in_days(other, false) == 0
+        (self.day == other.day) & (self.month == other.month) & (self.year == other.year)
     }
 
     fn ne(self: Self, other: Self) -> bool {
-        self.get_duration_in_days(other, false) != 0
+        !self.eq(other)
     }
 
     fn gte(self: Self, other: Self) -> bool {
@@ -385,4 +385,20 @@ fn test_date_get_duration_in_days() {
     assert(Date::new(2024, 1, 1).get_duration_in_days(date, false) == 365);
     assert(Date::new(2024, 12, 31).get_duration_in_days(date, false) == 365 + 365);
     assert(Date::new(2025, 1, 1).get_duration_in_days(date, false) == 365 + 366);
+}
+
+#[test]
+fn test_date_eq() {
+    let date = Date::new(2023, 1, 1);
+
+    assert(date.eq(Date::new(2023, 1, 1)));
+    assert(!date.eq(Date::new(2023, 1, 2)));
+}
+
+#[test]
+fn test_date_ne() {
+    let date = Date::new(2023, 1, 1);
+
+    assert(!date.ne(Date::new(2023, 1, 1)));
+    assert(date.ne(Date::new(2023, 1, 2)));
 }
