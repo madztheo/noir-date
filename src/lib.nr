@@ -289,6 +289,71 @@ impl Date {
             year: newYear,
         }
     }
+
+    fn add_days(self: Self, days: u16) -> Self {
+        let mut newDay = self.day as u16 + days;
+        let mut newMonth = self.month as u16;
+        let mut newYear = self.year;
+        let mut date = Self {
+            day: newDay as u8,
+            month: newMonth as u8,
+            year: newYear,
+        };
+        if newDay > self.get_days_in_month(self.month) as u16 {
+            let max_months = (newDay / 30) + 1;
+            let bound = self.month + max_months as u8;
+            for _ in self.month..bound {
+                let days_in_month = date.get_days_in_month(newMonth as u8) as u16;
+                if newDay > days_in_month {
+                    newDay -= days_in_month;
+                    newMonth += 1;
+                    if newMonth > 12 {
+                        newYear += 1;
+                        newMonth = 1;
+                    }
+                    // We need to mutate the date object inside the loop 
+                    // so we can use get_days_in_month properly
+                    date.day = newDay as u8;
+                    date.year = newYear;
+                    date.month = newMonth as u8;
+                }
+            }
+        }
+        date
+    }
+
+    // Performance could be improved
+    fn sub_days(self: Self, days: u16) -> Self {
+        let mut newDay = self.day as i32 - days as i32;
+        let mut newMonth = self.month as i32;
+        let mut newYear = self.year;
+        let mut date = Self {
+            day: newDay as u8,
+            month: newMonth as u8,
+            year: newYear,
+        };
+        if newDay < 1 {
+            let max_months = (self.day as u16 + days) / 30 + 1;
+            let bound = self.month + max_months as u8;
+            for _ in self.month..bound {
+                let days_in_month = date.get_days_in_month(newMonth as u8) as i32;
+                if newDay < 1 {
+                    newDay += days_in_month;
+                    newMonth -= 1;
+                    if newMonth < 1 {
+                        newYear -= 1;
+                        newMonth = 12;
+                    }
+                    // We need to mutate the date object inside the loop 
+                    // so we can use get_days_in_month properly
+                    date.day = newDay as u8;
+                    date.year = newYear;
+                    date.month = newMonth as u8;
+                }
+            }
+        }
+        date
+    }
 }
 
 #[test]
@@ -564,6 +629,79 @@ fn test_date_sub_months() {
     assert(date.sub_months(41).eq(Date::new(2020, 2, 14)));
     assert(date.sub_months(42).eq(Date::new(2020, 1, 14)));
     assert(date.sub_months(43).eq(Date::new(2019, 12, 14)));
+}
+
+#[test]
+fn test_date_add_days() {
+    let date = Date::new(2023, 7, 14);
+
+    assert(date.add_days(0).eq(Date::new(2023, 7, 14)));
+    assert(date.add_days(1).eq(Date::new(2023, 7, 15)));
+    assert(date.add_days(2).eq(Date::new(2023, 7, 16)));
+
+    assert(date.add_days(17).eq(Date::new(2023, 7, 31)));
+    assert(date.add_days(18).eq(Date::new(2023, 8, 1)));
+    assert(date.add_days(19).eq(Date::new(2023, 8, 2)));
+
+    assert(date.add_days(31).eq(Date::new(2023, 8, 14)));
+    assert(date.add_days(32).eq(Date::new(2023, 8, 15)));
+    assert(date.add_days(33).eq(Date::new(2023, 8, 16)));
+
+    assert(date.add_days(365).eq(Date::new(2024, 7, 13)));
+    assert(date.add_days(366).eq(Date::new(2024, 7, 14)));
+    assert(date.add_days(367).eq(Date::new(2024, 7, 15)));
+
+    assert(date.add_days(365 + 365).eq(Date::new(2025, 7, 13)));
+    assert(date.add_days(365 + 366).eq(Date::new(2025, 7, 14)));
+    assert(date.add_days(365 + 367).eq(Date::new(2025, 7, 15)));
+
+    assert(date.add_days(365 + 366 + 364).eq(Date::new(2026, 7, 13)));
+    assert(date.add_days(365 + 366 + 365).eq(Date::new(2026, 7, 14)));
+    assert(date.add_days(365 + 366 + 366).eq(Date::new(2026, 7, 15)));
+
+    // After 4 regular years and 2 leap years
+    assert(date.add_days(365 * 4 + 366 * 2 - 1).eq(Date::new(2029, 7, 13)));
+    assert(date.add_days(365 * 4 + 366 * 2).eq(Date::new(2029, 7, 14)));
+    assert(date.add_days(365 * 4 + 366 * 2 + 1).eq(Date::new(2029, 7, 15)));
+}
+
+#[test]
+fn test_date_sub_days() {
+    let date = Date::new(2023, 7, 14);
+
+    assert(date.sub_days(0).eq(Date::new(2023, 7, 14)));
+    assert(date.sub_days(1).eq(Date::new(2023, 7, 13)));
+    assert(date.sub_days(2).eq(Date::new(2023, 7, 12)));
+
+    assert(date.sub_days(17).eq(Date::new(2023, 6, 28)));
+    assert(date.sub_days(18).eq(Date::new(2023, 6, 27)));
+    assert(date.sub_days(19).eq(Date::new(2023, 6, 26)));
+
+    assert(date.sub_days(31).eq(Date::new(2023, 6, 14)));
+    assert(date.sub_days(32).eq(Date::new(2023, 6, 13)));
+    assert(date.sub_days(33).eq(Date::new(2023, 6, 12)));
+
+    assert(date.sub_days(365).eq(Date::new(2022, 7, 14)));
+    assert(date.sub_days(366).eq(Date::new(2022, 7, 13)));
+    assert(date.sub_days(367).eq(Date::new(2022, 7, 12)));
+
+    assert(date.sub_days(365 + 365).eq(Date::new(2021, 7, 14)));
+    assert(date.sub_days(365 + 366).eq(Date::new(2021, 7, 13)));
+    assert(date.sub_days(365 + 367).eq(Date::new(2021, 7, 12)));
+
+    assert(date.sub_days(365 + 365 + 365).eq(Date::new(2020, 7, 14)));
+    assert(date.sub_days(365 + 365 + 366).eq(Date::new(2020, 7, 13)));
+    assert(date.sub_days(365 + 365 + 367).eq(Date::new(2020, 7, 12)));
+
+    // After 5 regular years and 1 leap year
+    assert(date.sub_days(365 * 5 + 366 - 1).eq(Date::new(2017, 7, 15)));
+    assert(date.sub_days(365 * 5 + 366).eq(Date::new(2017, 7, 14)));
+    assert(date.sub_days(365 * 5 + 366 + 1).eq(Date::new(2017, 7, 13)));
+
+    // After 6 regular years and 2 leap years
+    assert(date.sub_days(365 * 6 + 366 * 2 - 1).eq(Date::new(2015, 7, 15)));
+    assert(date.sub_days(365 * 6 + 366 * 2).eq(Date::new(2015, 7, 14)));
+    assert(date.sub_days(365 * 6 + 366 * 2 + 1).eq(Date::new(2015, 7, 13)));
 }
 
 #[test]
