@@ -140,7 +140,21 @@ impl Date {
     }
 
     fn println(self: Self) {
-        println(self);
+        let year = self.year;
+        let month = self.month;
+        let day = self.day;
+        // Let's write the date in the YYYY-MM-DD format
+        // since people don't agree on which format is best
+        // between MM/DD/YYYY and DD/MM/YYYY
+        if (month < 10) & (day < 10) {
+            println(f"Date: {year}-0{month}-0{day}");
+        } else if month < 10 {
+            println(f"Date: {year}-0{month}-{day}");
+        } else if day < 10 {
+            println(f"Date: {year}-{month}-0{day}");
+        } else {
+            println(f"Date: {year}-{month}-{day}");
+        }
     }
 
     fn to_bytes(self: Self) -> [u8; 8] {
@@ -246,8 +260,8 @@ impl Date {
         }
     }
 
-    fn add_months(self: Self, months: u8) -> Self {
-        let mut newMonth = self.month + months;
+    fn add_months(self: Self, months: u16) -> Self {
+        let mut newMonth = self.month as u16 + months;
         let mut newYear = self.year;
         let yearToAdd = (newMonth - 1) / 12;
         if newMonth > 12 {
@@ -256,7 +270,22 @@ impl Date {
         }
         Self {
             day: self.day,
-            month: newMonth,
+            month: newMonth as u8,
+            year: newYear,
+        }
+    }
+
+    fn sub_months(self: Self, months: u16) -> Self {
+        let mut newMonth = self.month as i32 - months as i32;
+        let mut newYear = self.year;
+        if newMonth < 1 {
+            let yearToSub = ((newMonth as i32 - 12 as i32) * -1) / 12;
+            newYear -= yearToSub as u16;
+            newMonth += 12 * yearToSub;
+        }
+        Self {
+            day: self.day,
+            month: newMonth as u8,
             year: newYear,
         }
     }
@@ -511,6 +540,30 @@ fn test_date_add_months() {
 
     assert(date.add_months(29).eq(Date::new(2025, 12, 14)));
     assert(date.add_months(30).eq(Date::new(2026, 1, 14)));
+}
+
+#[test]
+fn test_date_sub_months() {
+    let date = Date::new(2023, 7, 14);
+
+    assert(date.sub_months(0).eq(Date::new(2023, 7, 14)));
+    assert(date.sub_months(1).eq(Date::new(2023, 6, 14)));
+    assert(date.sub_months(2).eq(Date::new(2023, 5, 14)));
+
+    assert(date.sub_months(6).eq(Date::new(2023, 1, 14)));
+    assert(date.sub_months(7).eq(Date::new(2022, 12, 14)));
+    assert(date.sub_months(8).eq(Date::new(2022, 11, 14)));
+
+    assert(date.sub_months(17).eq(Date::new(2022, 2, 14)));
+    assert(date.sub_months(18).eq(Date::new(2022, 1, 14)));
+    assert(date.sub_months(19).eq(Date::new(2021, 12, 14)));
+
+    assert(date.sub_months(30).eq(Date::new(2021, 1, 14)));
+    assert(date.sub_months(31).eq(Date::new(2020, 12, 14)));
+
+    assert(date.sub_months(41).eq(Date::new(2020, 2, 14)));
+    assert(date.sub_months(42).eq(Date::new(2020, 1, 14)));
+    assert(date.sub_months(43).eq(Date::new(2019, 12, 14)));
 }
 
 #[test]
