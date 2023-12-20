@@ -50,5 +50,5 @@ let duration = date2.get_duration_in_days(date1, false);
 
 ## Notes
 
-This library is still in development and has not been fully tested yet. At the moment, there is a known bug related to comparisons with negative and positive numbers.
+This library is still in development. At the moment, there is a known bug related to comparisons with negative and positive numbers that has been fixed in the version 0.22.0 of Noir. So please install the latest nightly version of Noir to use this library.
 If you find any other bugs, please report them in the issues section of this repository.

@@ -229,6 +229,37 @@ impl Date {
         }
         duration
     }
+
+    fn add_years(self: Self, years: u16) -> Self {
+        Self {
+            day: self.day,
+            month: self.month,
+            year: self.year + years,
+        }
+    }
+
+    fn sub_years(self: Self, years: u16) -> Self {
+        Self {
+            day: self.day,
+            month: self.month,
+            year: self.year - years,
+        }
+    }
+
+    fn add_months(self: Self, months: u8) -> Self {
+        let mut newMonth = self.month + months;
+        let mut newYear = self.year;
+        let yearToAdd = (newMonth - 1) / 12;
+        if newMonth > 12 {
+            newYear += yearToAdd as u16;
+            newMonth -= 12 * yearToAdd;
+        }
+        Self {
+            day: self.day,
+            month: newMonth,
+            year: newYear,
+        }
+    }
 }
 
 #[test]
@@ -401,4 +432,99 @@ fn test_date_ne() {
 
     assert(!date.ne(Date::new(2023, 1, 1)));
     assert(date.ne(Date::new(2023, 1, 2)));
+}
+
+#[test]
+fn test_date_gt() {
+    let date = Date::new(2023, 1, 1);
+
+    assert(!date.gt(Date::new(2023, 1, 1)));
+    assert(!date.gt(Date::new(2023, 1, 2)));
+    assert(date.gt(Date::new(2022, 12, 31)));
+}
+
+#[test]
+fn test_date_lt() {
+    let date = Date::new(2023, 1, 1);
+
+    assert(!date.lt(Date::new(2023, 1, 1)));
+    assert(!date.lt(Date::new(2022, 12, 31)));
+    assert(date.lt(Date::new(2023, 1, 2)));
+}
+
+#[test]
+fn test_date_gte() {
+    let date = Date::new(2023, 1, 1);
+
+    assert(date.gte(Date::new(2023, 1, 1)));
+    assert(!date.gte(Date::new(2023, 1, 2)));
+    assert(date.gte(Date::new(2022, 12, 31)));
+}
+
+#[test]
+fn test_date_lte() {
+    let date = Date::new(2023, 1, 1);
+
+    assert(date.lte(Date::new(2023, 1, 1)));
+    assert(!date.lte(Date::new(2022, 12, 31)));
+    assert(date.lte(Date::new(2023, 1, 2)));
+}
+
+#[test]
+fn test_date_add_years() {
+    let date = Date::new(2023, 7, 14);
+
+    assert(date.add_years(0).eq(Date::new(2023, 7, 14)));
+    assert(date.add_years(1).eq(Date::new(2024, 7, 14)));
+    assert(date.add_years(2).eq(Date::new(2025, 7, 14)));
+    assert(date.add_years(3).eq(Date::new(2026, 7, 14)));
+    assert(date.add_years(4).eq(Date::new(2027, 7, 14)));
+    assert(date.add_years(5).eq(Date::new(2028, 7, 14)));
+}
+
+#[test]
+fn test_date_sub_years() {
+    let date = Date::new(2023, 7, 14);
+
+    assert(date.sub_years(0).eq(Date::new(2023, 7, 14)));
+    assert(date.sub_years(1).eq(Date::new(2022, 7, 14)));
+    assert(date.sub_years(2).eq(Date::new(2021, 7, 14)));
+    assert(date.sub_years(3).eq(Date::new(2020, 7, 14)));
+    assert(date.sub_years(4).eq(Date::new(2019, 7, 14)));
+    assert(date.sub_years(5).eq(Date::new(2018, 7, 14)));
+}
+
+#[test]
+fn test_date_add_months() {
+    let date = Date::new(2023, 7, 14);
+
+    assert(date.add_months(0).eq(Date::new(2023, 7, 14)));
+    assert(date.add_months(1).eq(Date::new(2023, 8, 14)));
+    assert(date.add_months(2).eq(Date::new(2023, 9, 14)));
+
+    assert(date.add_months(6).eq(Date::new(2024, 1, 14)));
+    assert(date.add_months(7).eq(Date::new(2024, 2, 14)));
+    assert(date.add_months(8).eq(Date::new(2024, 3, 14)));
+
+    assert(date.add_months(17).eq(Date::new(2024, 12, 14)));
+    assert(date.add_months(18).eq(Date::new(2025, 1, 14)));
+
+    assert(date.add_months(29).eq(Date::new(2025, 12, 14)));
+    assert(date.add_months(30).eq(Date::new(2026, 1, 14)));
+}
+
+#[test]
+fn test_date_age() {
+    let birthdate = Date::new(1995, 4, 13);
+
+    // Add 18 years to the birthdate
+    // to get the date when the person is 18 years old
+    let majority_date = birthdate.add_years(18);
+
+    // Make sure the majority date is correct
+    assert(majority_date.eq(Date::new(2013, 4, 13)));
+
+    // Compare the majority date to the current date
+    // to see if the person is 18 years old
+    assert(majority_date.lte(Date::new(2023, 12, 20)));
 }
