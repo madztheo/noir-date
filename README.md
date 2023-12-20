@@ -43,9 +43,71 @@ let date1 = Date::new(2023, 10, 2);
 
 let date2 = Date::new(2023, 12, 20);
 
-// Will return 79
 // date2 - date1
 let duration = date2.get_duration_in_days(date1, false);
+assert(duration == 79);
+```
+
+### Add years to a date
+
+```rust
+let date = Date::new(2023, 10, 2);
+
+let date = date.add_years(2);
+assert(date.eq(Date::new(2025, 10, 2)));
+```
+
+### Add months to a date
+
+```rust
+let date = Date::new(2023, 10, 2);
+
+let date = date.add_months(3);
+
+assert(date.eq(Date::new(2024, 1, 2)));
+```
+
+### Add days to a date
+
+```rust
+let date = Date::new(2023, 10, 2);
+
+let date = date.add_days(3);
+
+assert(date.eq(Date::new(2023, 10, 5)));
+```
+
+### Check if a date is a leap year
+
+```rust
+let leap_year = Date::new(2024, 1, 1);
+
+assert(leap_year.is_leap_year());
+
+let not_leap_year = Date::new(2023, 1, 1);
+
+assert(!not_leap_year.is_leap_year());
+```
+
+### Compare dates
+
+```rust
+let date1 = Date::new(2023, 10, 2);
+
+let date2 = Date::new(2023, 12, 20);
+
+assert(date1.lt(date2));
+assert(date2.gt(date1));
+```
+
+### Check someone's age is above 18 years old
+
+```rust
+let birthdate = Date::new(1993, 3, 6);
+
+let current_date = Date::new(2023, 12, 20);
+
+assert(current_date.gte(birthdate.add_years(18)));
 ```
 
 ## Notes
