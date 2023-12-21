@@ -211,12 +211,16 @@ impl Date {
         assert(other.month >= 1 & other.month <= 12);
         let mut duration: i32 = 0;
         if(self.month < other.month) {
-            for month in self.month..other.month {
-                duration -= other.get_days_in_month(month) as i32;
+            for month in 1..13 {
+                if month >= self.month & month < other.month {
+                    duration -= other.get_days_in_month(month) as i32;
+                }
             }
         } else {
-            for month in other.month..self.month {
-                duration += self.get_days_in_month(month) as i32;
+            for month in 1..13 {
+                if month >= other.month & month < self.month {
+                    duration += self.get_days_in_month(month) as i32;
+                }
             }
         }
         duration
@@ -225,19 +229,23 @@ impl Date {
     fn get_duration_between_years(self: Self, other: Self) -> i32 {
         let mut duration: i32 = 0;
         if(self.year < other.year) {
-            for year in self.year..other.year {
-                if Date::new(year as u16, 1, 1).is_leap_year() {
-                    duration -= 366;
-                } else {
-                    duration -= 365;
+            for year in 1900..2100 {
+                if year >= self.year & year < other.year {
+                    if Date::new(year as u16, 1, 1).is_leap_year() {
+                        duration -= 366;
+                    } else {
+                        duration -= 365;
+                    }
                 }
             }
         } else {
-            for year in other.year..self.year {
-                if Date::new(year as u16, 1, 1).is_leap_year() {
-                    duration += 366;
-                } else {
-                    duration += 365;
+            for year in 1900..2100 {
+                if year >= other.year & year < self.year {
+                    if Date::new(year as u16, 1, 1).is_leap_year() {
+                        duration += 366;
+                    } else {
+                        duration += 365;
+                    }
                 }
             }
         }
