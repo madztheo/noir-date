@@ -230,20 +230,20 @@ impl Date {
         let mut duration: i32 = 0;
         if (self.year < other.year) {
             let previous_leap_year: u16 = other.year - (other.year % 4);
-            let mut leap_year_count: i32 = 0;
+            let mut leap_year_count: u16 = 0;
             if self.year <= previous_leap_year {
-                leap_year_count = (previous_leap_year - self.year) as i32 / 4 + 1;
+                leap_year_count = (previous_leap_year - self.year) / 4 + 1;
             }
             duration -= leap_year_count as i32 * 366;
-            duration -= (other.year as i32 - self.year as i32 - leap_year_count) as i32 * 365;
+            duration -= (other.year as i32 - self.year as i32 - leap_year_count as i32) as i32 * 365;
         } else if (self.year > other.year) {
             let next_leap_year: u16 = other.year + (4 - other.year % 4);
-            let mut leap_year_count: i32 = 0;
+            let mut leap_year_count: u16 = 0;
             if self.year > next_leap_year {
-                leap_year_count = ((self.year - 1) - next_leap_year) as i32 / 4 + 1;
+                leap_year_count = ((self.year - 1) - next_leap_year) / 4 + 1;
             }
             duration += leap_year_count as i32 * 366;
-            duration += (self.year as i32 - other.year as i32 - leap_year_count) as i32 * 365;
+            duration += (self.year as i32 - other.year as i32 - leap_year_count as i32) as i32 * 365;
         }
         duration
     }
