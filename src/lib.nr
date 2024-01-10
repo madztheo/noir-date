@@ -228,26 +228,22 @@ impl Date {
 
     fn get_duration_between_years(self: Self, other: Self) -> i32 {
         let mut duration: i32 = 0;
-        if(self.year < other.year) {
-            for year in 1900..2100 {
-                if year >= self.year & year < other.year {
-                    if Date::new(year as u16, 1, 1).is_leap_year() {
-                        duration -= 366;
-                    } else {
-                        duration -= 365;
-                    }
-                }
+        if (self.year < other.year) {
+            let previous_leap_year: u16 = other.year - (other.year % 4);
+            let mut leap_year_count: i32 = 0;
+            if self.year <= previous_leap_year {
+                leap_year_count = (previous_leap_year - self.year) as i32 / 4 + 1;
             }
-        } else {
-            for year in 1900..2100 {
-                if year >= other.year & year < self.year {
-                    if Date::new(year as u16, 1, 1).is_leap_year() {
-                        duration += 366;
-                    } else {
-                        duration += 365;
-                    }
-                }
+            duration -= leap_year_count as i32 * 366;
+            duration -= (other.year as i32 - self.year as i32 - leap_year_count) as i32 * 365;
+        } else if (self.year > other.year) {
+            let next_leap_year: u16 = other.year + (4 - other.year % 4);
+            let mut leap_year_count: i32 = 0;
+            if self.year > next_leap_year {
+                leap_year_count = ((self.year - 1) - next_leap_year) as i32 / 4 + 1;
             }
+            duration += leap_year_count as i32 * 366;
+            duration += (self.year as i32 - other.year as i32 - leap_year_count) as i32 * 365;
         }
         duration
     }
@@ -491,6 +487,7 @@ fn test_date_get_duration_between_months() {
 fn test_date_get_duration_between_years() {
     let date = Date::new(2023, 1, 1);
 
+    // Positive duration
     assert(Date::new(2023, 1, 1).get_duration_between_years(date) == 0);
     assert(Date::new(2024, 1, 1).get_duration_between_years(date) == 365);
     assert(Date::new(2025, 1, 1).get_duration_between_years(date) == 731);
@@ -503,6 +500,19 @@ fn test_date_get_duration_between_years() {
     assert(Date::new(2032, 1, 1).get_duration_between_years(date) == 3287);
     assert(Date::new(2033, 1, 1).get_duration_between_years(date) == 3653);
     assert(Date::new(2034, 1, 1).get_duration_between_years(date) == 4018);
+
+    // Negative duration
+    assert(Date::new(2022, 1, 1).get_duration_between_years(date) == -365);
+    assert(Date::new(2021, 1, 1).get_duration_between_years(date) == -730);
+    assert(Date::new(2020, 1, 1).get_duration_between_years(date) == -1096);
+    assert(Date::new(2019, 1, 1).get_duration_between_years(date) == -1461);
+    assert(Date::new(2018, 1, 1).get_duration_between_years(date) == -1826);
+    assert(Date::new(2017, 1, 1).get_duration_between_years(date) == -2191);
+    assert(Date::new(2016, 1, 1).get_duration_between_years(date) == -2557);
+    assert(Date::new(2015, 1, 1).get_duration_between_years(date) == -2922);
+    assert(Date::new(2014, 1, 1).get_duration_between_years(date) == -3287);
+    assert(Date::new(2013, 1, 1).get_duration_between_years(date) == -3652);
+    assert(Date::new(2012, 1, 1).get_duration_between_years(date) == -4018);
 }
 
 #[test]
