@@ -3,7 +3,7 @@ use dep::std::println;
 struct Date {
     day: u8,
     month: u8,
-    year: u16,
+    year: u32,
 }
 
 fn get_number_from_utf8_code(code: u8) -> u8 {
@@ -17,7 +17,7 @@ fn number_to_utf8_code(number: u8) -> u8 {
 }
 
 impl Date {
-    pub fn new(year: u16, month: u8, day: u8) -> Self {
+    pub fn new(year: u32, month: u8, day: u8) -> Self {
         assert(month >= 1 & month <= 12);
         assert(day >= 1 & day <= 31);
         let date = Self {
@@ -33,7 +33,7 @@ impl Date {
         let firstYearDigit = get_number_from_utf8_code(date[0]);
         let secondYearDigit = get_number_from_utf8_code(date[1]);
 
-        let mut year: u16 = firstYearDigit as u16 * 10 + secondYearDigit as u16;
+        let mut year: u32 = firstYearDigit as u32 * 10 + secondYearDigit as u32;
 
         let firstMonthDigit = get_number_from_utf8_code(date[2]);
         let secondMonthDigit = get_number_from_utf8_code(date[3]);
@@ -48,7 +48,7 @@ impl Date {
         let currentYearFirstDigit = get_number_from_utf8_code(threshold_year[0]);
         let currentYearSecondDigit = get_number_from_utf8_code(threshold_year[1]);
 
-        let mut currentYear: u16 = currentYearFirstDigit as u16 * 10 + currentYearSecondDigit as u16;
+        let mut currentYear: u32 = currentYearFirstDigit as u32 * 10 + currentYearSecondDigit as u32;
 
         // This way we have a smooth 100 years period according to a threshold year
         // Taking the current year as threshold year (for birthdates for example)
@@ -74,7 +74,7 @@ impl Date {
         let thirdYearDigit = get_number_from_utf8_code(date[2]);
         let fourthYearDigit = get_number_from_utf8_code(date[3]);
 
-        let year: u16 = firstYearDigit as u16 * 1000 + secondYearDigit as u16 * 100 + thirdYearDigit as u16 * 10 + fourthYearDigit as u16;
+        let year: u32 = firstYearDigit as u32 * 1000 + secondYearDigit as u32 * 100 + thirdYearDigit as u32 * 10 + fourthYearDigit as u32;
 
         let firstMonthDigit = get_number_from_utf8_code(date[4]);
         let secondMonthDigit = get_number_from_utf8_code(date[5]);
@@ -229,16 +229,16 @@ impl Date {
     fn get_duration_between_years(self: Self, other: Self) -> i32 {
         let mut duration: i32 = 0;
         if (self.year < other.year) {
-            let previous_leap_year: u16 = other.year - (other.year % 4);
-            let mut leap_year_count: u16 = 0;
+            let previous_leap_year: u32 = other.year - (other.year % 4);
+            let mut leap_year_count: u32 = 0;
             if self.year <= previous_leap_year {
                 leap_year_count = (previous_leap_year - self.year) / 4 + 1;
             }
             duration -= leap_year_count as i32 * 366;
             duration -= (other.year as i32 - self.year as i32 - leap_year_count as i32) as i32 * 365;
         } else if (self.year > other.year) {
-            let next_leap_year: u16 = other.year + (4 - other.year % 4);
-            let mut leap_year_count: u16 = 0;
+            let next_leap_year: u32 = other.year + (4 - other.year % 4);
+            let mut leap_year_count: u32 = 0;
             if self.year > next_leap_year {
                 leap_year_count = ((self.year - 1) - next_leap_year) / 4 + 1;
             }
@@ -248,7 +248,7 @@ impl Date {
         duration
     }
 
-    fn add_years(self: Self, years: u16) -> Self {
+    fn add_years(self: Self, years: u32) -> Self {
         Self {
             day: self.day,
             month: self.month,
@@ -256,7 +256,7 @@ impl Date {
         }
     }
 
-    fn sub_years(self: Self, years: u16) -> Self {
+    fn sub_years(self: Self, years: u32) -> Self {
         Self {
             day: self.day,
             month: self.month,
@@ -264,12 +264,12 @@ impl Date {
         }
     }
 
-    fn add_months(self: Self, months: u16) -> Self {
-        let mut newMonth = self.month as u16 + months;
+    fn add_months(self: Self, months: u32) -> Self {
+        let mut newMonth = self.month as u32 + months;
         let mut newYear = self.year;
         let yearToAdd = (newMonth - 1) / 12;
         if newMonth > 12 {
-            newYear += yearToAdd as u16;
+            newYear += yearToAdd as u32;
             newMonth -= 12 * yearToAdd;
         }
         Self {
@@ -279,12 +279,12 @@ impl Date {
         }
     }
 
-    fn sub_months(self: Self, months: u16) -> Self {
+    fn sub_months(self: Self, months: u32) -> Self {
         let mut newMonth = self.month as i32 - months as i32;
         let mut newYear = self.year;
         if newMonth < 1 {
             let yearToSub = ((newMonth as i32 - 12 as i32) * -1) / 12;
-            newYear -= yearToSub as u16;
+            newYear -= yearToSub as u32;
             newMonth += 12 * yearToSub;
         }
         Self {
@@ -294,20 +294,20 @@ impl Date {
         }
     }
 
-    fn add_days(self: Self, days: u16) -> Self {
-        let mut newDay = self.day as u16 + days;
-        let mut newMonth = self.month as u16;
+    fn add_days(self: Self, days: u32) -> Self {
+        let mut newDay = self.day as u32 + days;
+        let mut newMonth = self.month as u32;
         let mut newYear = self.year;
         let mut date = Self {
             day: newDay as u8,
             month: newMonth as u8,
             year: newYear,
         };
-        if newDay > self.get_days_in_month(self.month) as u16 {
+        if newDay > self.get_days_in_month(self.month) as u32 {
             let max_months = (newDay / 30) + 1;
             let bound = self.month + max_months as u8;
             for _ in self.month..bound {
-                let days_in_month = date.get_days_in_month(newMonth as u8) as u16;
+                let days_in_month = date.get_days_in_month(newMonth as u8) as u32;
                 if newDay > days_in_month {
                     newDay -= days_in_month;
                     newMonth += 1;
@@ -327,7 +327,7 @@ impl Date {
     }
 
     // Performance could be improved
-    fn sub_days(self: Self, days: u16) -> Self {
+    fn sub_days(self: Self, days: u32) -> Self {
         let mut newDay = self.day as i32 - days as i32;
         let mut newMonth = self.month as i32;
         let mut newYear = self.year;
@@ -337,7 +337,7 @@ impl Date {
             year: newYear,
         };
         if newDay < 1 {
-            let max_months = (self.day as u16 + days) / 30 + 1;
+            let max_months = (self.day as u32 + days) / 30 + 1;
             let bound = self.month + max_months as u8;
             for _ in self.month..bound {
                 let days_in_month = date.get_days_in_month(newMonth as u8) as i32;
