@@ -1,6 +1,6 @@
-use dep::std::println;
+use dep::std::{field::bn254::assert_gt, println};
 
-struct Date {
+pub struct Date {
     day: u8,
     month: u8,
     year: u32,
@@ -20,11 +20,7 @@ impl Date {
     pub fn new(year: u32, month: u8, day: u8) -> Self {
         assert(month >= 1 & month <= 12);
         assert(day >= 1 & day <= 31);
-        let date = Self {
-            day: day,
-            month: month,
-            year: year,
-        };
+        let date = Self { day: day, month: month, year: year };
         assert(day <= date.get_days_in_month(month));
         date
     }
@@ -48,7 +44,8 @@ impl Date {
         let currentYearFirstDigit = get_number_from_utf8_code(threshold_year[0]);
         let currentYearSecondDigit = get_number_from_utf8_code(threshold_year[1]);
 
-        let mut currentYear: u32 = currentYearFirstDigit as u32 * 10 + currentYearSecondDigit as u32;
+        let mut currentYear: u32 =
+            currentYearFirstDigit as u32 * 10 + currentYearSecondDigit as u32;
 
         // This way we have a smooth 100 years period according to a threshold year
         // Taking the current year as threshold year (for birthdates for example)
@@ -61,11 +58,7 @@ impl Date {
             year += 1900;
         }
 
-        Self {
-            day: day,
-            month: month,
-            year: year,
-        }
+        Self { day: day, month: month, year: year }
     }
 
     pub fn from_bytes_long_year(date: [u8; 8]) -> Self {
@@ -74,7 +67,10 @@ impl Date {
         let thirdYearDigit = get_number_from_utf8_code(date[2]);
         let fourthYearDigit = get_number_from_utf8_code(date[3]);
 
-        let year: u32 = firstYearDigit as u32 * 1000 + secondYearDigit as u32 * 100 + thirdYearDigit as u32 * 10 + fourthYearDigit as u32;
+        let year: u32 = firstYearDigit as u32 * 1000
+            + secondYearDigit as u32 * 100
+            + thirdYearDigit as u32 * 10
+            + fourthYearDigit as u32;
 
         let firstMonthDigit = get_number_from_utf8_code(date[4]);
         let secondMonthDigit = get_number_from_utf8_code(date[5]);
@@ -86,27 +82,23 @@ impl Date {
 
         let day = firstDayDigit * 10 + secondDayDigit;
 
-        Self {
-            day: day,
-            month: month,
-            year: year,
-        }
+        Self { day: day, month: month, year: year }
     }
 
     pub fn from_str_short_year(date: str<6>, threshold_year: str<2>) -> Self {
         let date_bytes = date.as_bytes();
         Date::from_bytes_short_year(date_bytes, threshold_year.as_bytes())
     }
-    
+
     pub fn from_str_long_year(date: str<8>) -> Self {
         let date_bytes = date.as_bytes();
         Date::from_bytes_long_year(date_bytes)
     }
 
-    fn get_duration_in_days(self: Self, other: Self, absolute: bool) -> i32 {
-        let totalDuration: i32 = self.get_duration_between_years(other) as i32 
-        + self.get_duration_between_months(other) as i32
-        + (self.day as i32 - other.day as i32);
+    pub fn get_duration_in_days(self: Self, other: Self, absolute: bool) -> i32 {
+        let totalDuration: i32 = self.get_duration_between_years(other) as i32
+            + self.get_duration_between_months(other) as i32
+            + (self.day as i32 - other.day as i32);
 
         if (totalDuration < 0) & absolute {
             -1 * totalDuration
@@ -115,31 +107,31 @@ impl Date {
         totalDuration
     }
 
-    fn gt(self: Self, other: Self) -> bool {
+    pub fn gt(self: Self, other: Self) -> bool {
         self.get_duration_in_days(other, false) > 0
     }
 
-    fn lt(self: Self, other: Self) -> bool {
+    pub fn lt(self: Self, other: Self) -> bool {
         self.get_duration_in_days(other, false) < 0
     }
 
-    fn eq(self: Self, other: Self) -> bool {
+    pub fn eq(self: Self, other: Self) -> bool {
         (self.day == other.day) & (self.month == other.month) & (self.year == other.year)
     }
 
-    fn ne(self: Self, other: Self) -> bool {
+    pub fn ne(self: Self, other: Self) -> bool {
         !self.eq(other)
     }
 
-    fn gte(self: Self, other: Self) -> bool {
+    pub fn gte(self: Self, other: Self) -> bool {
         self.get_duration_in_days(other, false) >= 0
     }
 
-    fn lte(self: Self, other: Self) -> bool {
+    pub fn lte(self: Self, other: Self) -> bool {
         self.get_duration_in_days(other, false) <= 0
     }
 
-    fn println(self: Self) {
+    pub fn println(self: Self) {
         let year = self.year;
         let month = self.month;
         let day = self.day;
@@ -157,13 +149,14 @@ impl Date {
         }
     }
 
-    fn to_bytes(self: Self) -> [u8; 8] {
+    pub fn to_bytes(self: Self) -> [u8; 8] {
         let mut date: [u8; 8] = [0; 8];
 
         let firstYearDigit = self.year / 1000;
         let secondYearDigit = (self.year - firstYearDigit * 1000) / 100;
         let thirdYearDigit = (self.year - firstYearDigit * 1000 - secondYearDigit * 100) / 10;
-        let fourthYearDigit = self.year - firstYearDigit * 1000 - secondYearDigit * 100 - thirdYearDigit * 10;
+        let fourthYearDigit =
+            self.year - firstYearDigit * 1000 - secondYearDigit * 100 - thirdYearDigit * 10;
 
         date[0] = number_to_utf8_code(firstYearDigit as u8);
         date[1] = number_to_utf8_code(secondYearDigit as u8);
@@ -185,11 +178,11 @@ impl Date {
         date
     }
 
-    fn is_leap_year(self: Self) -> bool {
+    pub fn is_leap_year(self: Self) -> bool {
         self.year % 4 == 0
     }
 
-    fn get_days_in_month(self: Self, month: u8) -> u8 {
+    pub fn get_days_in_month(self: Self, month: u8) -> u8 {
         assert(month >= 1 & month <= 12);
         if month == 2 {
             if self.is_leap_year() {
@@ -198,7 +191,13 @@ impl Date {
                 28
             }
         } else {
-            if (month == 1) | (month == 3) | (month == 5) | (month == 7) | (month == 8) | (month == 10) | (month == 12) {
+            if (month == 1)
+                | (month == 3)
+                | (month == 5)
+                | (month == 7)
+                | (month == 8)
+                | (month == 10)
+                | (month == 12) {
                 31
             } else {
                 30
@@ -206,11 +205,11 @@ impl Date {
         }
     }
 
-    fn get_duration_between_months(self: Self, other: Self) -> i32 {
+    pub fn get_duration_between_months(self: Self, other: Self) -> i32 {
         assert(self.month >= 1 & self.month <= 12);
         assert(other.month >= 1 & other.month <= 12);
         let mut duration: i32 = 0;
-        if(self.month < other.month) {
+        if (self.month < other.month) {
             for month in 1..13 {
                 if month >= self.month & month < other.month {
                     duration -= other.get_days_in_month(month) as i32;
@@ -226,7 +225,7 @@ impl Date {
         duration
     }
 
-    fn get_duration_between_years(self: Self, other: Self) -> i32 {
+    pub fn get_duration_between_years(self: Self, other: Self) -> i32 {
         let mut duration: i32 = 0;
         if (self.year < other.year) {
             let previous_leap_year: u32 = other.year - (other.year % 4);
@@ -235,36 +234,33 @@ impl Date {
                 leap_year_count = (previous_leap_year - self.year) / 4 + 1;
             }
             duration -= leap_year_count as i32 * 366;
-            duration -= (other.year as i32 - self.year as i32 - leap_year_count as i32) as i32 * 365;
+            duration -=
+                (other.year as i32 - self.year as i32 - leap_year_count as i32) as i32 * 365;
         } else if (self.year > other.year) {
             let next_leap_year: u32 = other.year + (4 - other.year % 4);
             let mut leap_year_count: u32 = 0;
             if self.year > next_leap_year {
+                // Fixes a weird bug where the line below triggers a fail constraint
+                // while self.year is greater than next_leap_year
+                assert_gt(self.year as Field, next_leap_year as Field);
                 leap_year_count = ((self.year - 1) - next_leap_year) / 4 + 1;
             }
             duration += leap_year_count as i32 * 366;
-            duration += (self.year as i32 - other.year as i32 - leap_year_count as i32) as i32 * 365;
+            duration +=
+                (self.year as i32 - other.year as i32 - leap_year_count as i32) as i32 * 365;
         }
         duration
     }
 
-    fn add_years(self: Self, years: u32) -> Self {
-        Self {
-            day: self.day,
-            month: self.month,
-            year: self.year + years,
-        }
+    pub fn add_years(self: Self, years: u32) -> Self {
+        Self { day: self.day, month: self.month, year: self.year + years }
     }
 
-    fn sub_years(self: Self, years: u32) -> Self {
-        Self {
-            day: self.day,
-            month: self.month,
-            year: self.year - years,
-        }
+    pub fn sub_years(self: Self, years: u32) -> Self {
+        Self { day: self.day, month: self.month, year: self.year - years }
     }
 
-    fn add_months(self: Self, months: u32) -> Self {
+    pub fn add_months(self: Self, months: u32) -> Self {
         let mut newMonth = self.month as u32 + months;
         let mut newYear = self.year;
         let yearToAdd = (newMonth - 1) / 12;
@@ -272,14 +268,10 @@ impl Date {
             newYear += yearToAdd as u32;
             newMonth -= 12 * yearToAdd;
         }
-        Self {
-            day: self.day,
-            month: newMonth as u8,
-            year: newYear,
-        }
+        Self { day: self.day, month: newMonth as u8, year: newYear }
     }
 
-    fn sub_months(self: Self, months: u32) -> Self {
+    pub fn sub_months(self: Self, months: u32) -> Self {
         let mut newMonth = self.month as i32 - months as i32;
         let mut newYear = self.year;
         if newMonth < 1 {
@@ -287,22 +279,14 @@ impl Date {
             newYear -= yearToSub as u32;
             newMonth += 12 * yearToSub;
         }
-        Self {
-            day: self.day,
-            month: newMonth as u8,
-            year: newYear,
-        }
+        Self { day: self.day, month: newMonth as u8, year: newYear }
     }
 
-    fn add_days(self: Self, days: u32) -> Self {
+    pub fn add_days(self: Self, days: u32) -> Self {
         let mut newDay = self.day as u32 + days;
         let mut newMonth = self.month as u32;
         let mut newYear = self.year;
-        let mut date = Self {
-            day: newDay as u8,
-            month: newMonth as u8,
-            year: newYear,
-        };
+        let mut date = Self { day: newDay as u8, month: newMonth as u8, year: newYear };
         if newDay > self.get_days_in_month(self.month) as u32 {
             let max_months = (newDay / 30) + 1;
             let bound = self.month + max_months as u8;
@@ -315,7 +299,7 @@ impl Date {
                         newYear += 1;
                         newMonth = 1;
                     }
-                    // We need to mutate the date object inside the loop 
+                    // We need to mutate the date object inside the loop
                     // so we can use get_days_in_month properly
                     date.day = newDay as u8;
                     date.year = newYear;
@@ -327,15 +311,11 @@ impl Date {
     }
 
     // Performance could be improved
-    fn sub_days(self: Self, days: u32) -> Self {
+    pub fn sub_days(self: Self, days: u32) -> Self {
         let mut newDay = self.day as i32 - days as i32;
         let mut newMonth = self.month as i32;
         let mut newYear = self.year;
-        let mut date = Self {
-            day: newDay as u8,
-            month: newMonth as u8,
-            year: newYear,
-        };
+        let mut date = Self { day: newDay as u8, month: newMonth as u8, year: newYear };
         if newDay < 1 {
             let max_months = (self.day as u32 + days) / 30 + 1;
             let bound = self.month + max_months as u8;
@@ -348,7 +328,7 @@ impl Date {
                         newYear -= 1;
                         newMonth = 12;
                     }
-                    // We need to mutate the date object inside the loop 
+                    // We need to mutate the date object inside the loop
                     // so we can use get_days_in_month properly
                     date.day = newDay as u8;
                     date.year = newYear;
