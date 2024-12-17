@@ -241,7 +241,8 @@ impl Date {
             let mut leap_year_count: u32 = 0;
             if self.year > next_leap_year {
                 // Fixes a weird bug where the line below triggers a fail constraint
-                // while self.year is greater than next_leap_year
+                // while self.year is less than next_leap_year and should not be considered
+                // because of the if clause above
                 assert_gt(self.year as Field, next_leap_year as Field);
                 leap_year_count = ((self.year - 1) - next_leap_year) / 4 + 1;
             }
