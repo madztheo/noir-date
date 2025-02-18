@@ -102,9 +102,9 @@ impl Date {
 
         if (totalDuration < 0) & absolute {
             -1 * totalDuration
+        } else {
+            totalDuration
         }
-
-        totalDuration
     }
 
     pub fn gt(self: Self, other: Self) -> bool {
@@ -179,7 +179,11 @@ impl Date {
     }
 
     pub fn is_leap_year(self: Self) -> bool {
-        self.year % 4 == 0
+        ((self.year % 4 == 0) & (self.year % 100 != 0)) | (self.year % 400 == 0)
+    }
+
+    pub fn leap_year_count(year: u32) -> u32 {
+        (year / 4) - (year / 100) + (year / 400)
     }
 
     pub fn get_days_in_month(self: Self, month: u8) -> u8 {
@@ -228,33 +232,19 @@ impl Date {
     pub fn get_duration_between_years(self: Self, other: Self) -> i32 {
         let mut duration: i32 = 0;
         if (self.year < other.year) {
-            let previous_leap_year: u32 = other.year - (other.year % 4);
-            let mut leap_year_count: u32 = 0;
-            if self.year <= previous_leap_year {
-                leap_year_count = (previous_leap_year - self.year) / 4 + 1;
+            let mut leap_year_count: u32 = Date::leap_year_count(other.year - 1) - Date::leap_year_count(self.year);
+            if (other.is_leap_year() & other.month > 2) | self.is_leap_year() {
+                leap_year_count += 1;
             }
             duration -= leap_year_count as i32 * 366;
-            duration -=
-                (other.year as i32 - self.year as i32 - leap_year_count as i32) as i32 * 365;
+            duration -= (other.year as i32 - self.year as i32 - leap_year_count as i32) as i32 * 365;
         } else if (self.year > other.year) {
-            let next_leap_year: u32 = other.year + (4 - other.year % 4);
-            let mut leap_year_count: u32 = 0;
-            if self.is_leap_year() & self.month > 2 {
+            let mut leap_year_count: u32 = Date::leap_year_count(self.year - 1) - Date::leap_year_count(other.year);
+            if (self.is_leap_year() & self.month > 2) | other.is_leap_year() {
                 leap_year_count += 1;
-            }
-            if other.is_leap_year() {
-                leap_year_count += 1;
-            }
-            if self.year > next_leap_year {
-                // Fixes a weird bug where the line below triggers a fail constraint
-                // while self.year is less than next_leap_year and should not be considered
-                // because of the if clause above
-                assert_gt(self.year as Field, next_leap_year as Field);
-                leap_year_count += ((self.year - 1) - next_leap_year) / 4 + 1;
             }
             duration += leap_year_count as i32 * 366;
-            duration +=
-                (self.year as i32 - other.year as i32 - leap_year_count as i32) as i32 * 365;
+            duration += (self.year as i32 - other.year as i32 - leap_year_count as i32) as i32 * 365;
         }
         duration
     }
