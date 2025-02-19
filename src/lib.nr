@@ -102,9 +102,9 @@ impl Date {
 
         if (totalDuration < 0) & absolute {
             -1 * totalDuration
+        } else {
+            totalDuration
         }
-
-        totalDuration
     }
 
     pub fn gt(self: Self, other: Self) -> bool {
@@ -179,7 +179,11 @@ impl Date {
     }
 
     pub fn is_leap_year(self: Self) -> bool {
-        self.year % 4 == 0
+        ((self.year % 4 == 0) & (self.year % 100 != 0)) | (self.year % 400 == 0)
+    }
+
+    pub fn leap_year_count(year: u32) -> u32 {
+        (year / 4) - (year / 100) + (year / 400)
     }
 
     pub fn get_days_in_month(self: Self, month: u8) -> u8 {
@@ -228,27 +232,19 @@ impl Date {
     pub fn get_duration_between_years(self: Self, other: Self) -> i32 {
         let mut duration: i32 = 0;
         if (self.year < other.year) {
-            let previous_leap_year: u32 = other.year - (other.year % 4);
-            let mut leap_year_count: u32 = 0;
-            if self.year <= previous_leap_year {
-                leap_year_count = (previous_leap_year - self.year) / 4 + 1;
+            let mut leap_year_count: u32 = Date::leap_year_count(other.year - 1) - Date::leap_year_count(self.year);
+            if (other.is_leap_year() & other.month > 2) | self.is_leap_year() {
+                leap_year_count += 1;
             }
             duration -= leap_year_count as i32 * 366;
-            duration -=
-                (other.year as i32 - self.year as i32 - leap_year_count as i32) as i32 * 365;
+            duration -= (other.year as i32 - self.year as i32 - leap_year_count as i32) as i32 * 365;
         } else if (self.year > other.year) {
-            let next_leap_year: u32 = other.year + (4 - other.year % 4);
-            let mut leap_year_count: u32 = 0;
-            if self.year > next_leap_year {
-                // Fixes a weird bug where the line below triggers a fail constraint
-                // while self.year is less than next_leap_year and should not be considered
-                // because of the if clause above
-                assert_gt(self.year as Field, next_leap_year as Field);
-                leap_year_count = ((self.year - 1) - next_leap_year) / 4 + 1;
+            let mut leap_year_count: u32 = Date::leap_year_count(self.year - 1) - Date::leap_year_count(other.year);
+            if (self.is_leap_year() & self.month > 2) | other.is_leap_year() {
+                leap_year_count += 1;
             }
             duration += leap_year_count as i32 * 366;
-            duration +=
-                (self.year as i32 - other.year as i32 - leap_year_count as i32) as i32 * 365;
+            duration += (self.year as i32 - other.year as i32 - leap_year_count as i32) as i32 * 365;
         }
         duration
     }
@@ -509,6 +505,103 @@ fn test_date_get_duration_in_days() {
     assert(Date::new(2024, 1, 1).get_duration_in_days(date, false) == 365);
     assert(Date::new(2024, 12, 31).get_duration_in_days(date, false) == 365 + 365);
     assert(Date::new(2025, 1, 1).get_duration_in_days(date, false) == 365 + 366);
+
+    assert(Date::new(2017, 6, 18).get_duration_in_days(Date::new(2000, 1, 1), false) == 6378);
+    assert(Date::new(2179, 6, 6).get_duration_in_days(Date::new(2000, 1, 1), false) == 0xffff);
+    assert(Date::new(2019, 6, 6).get_duration_in_days(Date::new(2000, 1, 1), false) == 7096);
+    assert(Date::new(2001, 1, 1).get_duration_in_days(Date::new(2000, 12, 31), false) == 1);
+    assert(Date::new(2001, 1, 1).get_duration_in_days(Date::new(2000, 12, 31), false) == 1);
+    assert(Date::new(2001, 1, 1).get_duration_in_days(Date::new(2000, 1, 1), false) == 366);
+    assert(Date::new(2023, 1, 1).get_duration_in_days(Date::new(2023, 1, 1), false) == 0);
+    assert(Date::new(2023, 1, 15).get_duration_in_days(Date::new(2023, 1, 1), false) == 14);
+    assert(Date::new(2023, 2, 1).get_duration_in_days(Date::new(2023, 1, 1), false) == 31);
+    assert(Date::new(2023, 12, 31).get_duration_in_days(Date::new(2023, 1, 1), false) == 364);
+    assert(Date::new(2024, 1, 1).get_duration_in_days(Date::new(2023, 1, 1), false) == 365);
+    assert(Date::new(2024, 1, 1).get_duration_in_days(Date::new(2020, 1, 1), false) == 1461);
+    assert(Date::new(2024, 1, 1).get_duration_in_days(Date::new(2020, 3, 1), false) == 1401);
+    assert(Date::new(2024, 12, 31).get_duration_in_days(Date::new(2023, 12, 31), false) == 366);
+    assert(Date::new(2028, 12, 31).get_duration_in_days(Date::new(2023, 12, 31), false) == 1827);
+    assert(Date::new(2029, 12, 31).get_duration_in_days(Date::new(2023, 12, 31), false) == 2192);
+    assert(Date::new(2023, 1, 1).get_duration_in_days(Date::new(2022, 1, 1), false) == 365);
+    assert(Date::new(2025, 1, 1).get_duration_in_days(Date::new(2023, 1, 1), false) == 731);
+    assert(Date::new(2026, 1, 1).get_duration_in_days(Date::new(2023, 1, 1), false) == 1096);
+    assert(Date::new(2030, 1, 1).get_duration_in_days(Date::new(2023, 1, 1), false) == 2557);
+    assert(Date::new(2023, 6, 15).get_duration_in_days(Date::new(2023, 1, 1), false) == 165);
+    assert(Date::new(2023, 12, 25).get_duration_in_days(Date::new(2023, 6, 15), false) == 193);
+    assert(Date::new(2024, 2, 29).get_duration_in_days(Date::new(2023, 12, 31), false) == 60);
+    assert(Date::new(2025, 3, 15).get_duration_in_days(Date::new(2023, 9, 1), false) == 561);
+    assert(Date::new(2050, 2, 4).get_duration_in_days(Date::new(2000, 1, 1), false) == 18297);
+    assert(Date::new(2171, 9, 9).get_duration_in_days(Date::new(2000, 1, 1), false) == 62708);
+    assert(Date::new(2142, 2, 24).get_duration_in_days(Date::new(2000, 1, 1), false) == 51919);
+    assert(Date::new(2091, 12, 23).get_duration_in_days(Date::new(2000, 1, 1), false) == 33594);
+    assert(Date::new(2169, 2, 14).get_duration_in_days(Date::new(2000, 1, 1), false) == 61771);
+    assert(Date::new(2038, 11, 12).get_duration_in_days(Date::new(2000, 1, 1), false) == 14195);
+    assert(Date::new(2129, 7, 11).get_duration_in_days(Date::new(2000, 1, 1), false) == 47308);
+    assert(Date::new(2112, 9, 16).get_duration_in_days(Date::new(2000, 1, 1), false) == 41166);
+    assert(Date::new(2109, 7, 23).get_duration_in_days(Date::new(2000, 1, 1), false) == 40015);
+    assert(Date::new(2101, 12, 18).get_duration_in_days(Date::new(2000, 1, 1), false) == 37241);
+    assert(Date::new(2150, 1, 7).get_duration_in_days(Date::new(2000, 1, 1), false) == 54793);
+    assert(Date::new(2179, 9, 15).get_duration_in_days(Date::new(2000, 1, 1), false) == 65636);
+    assert(Date::new(2038, 1, 30).get_duration_in_days(Date::new(2000, 1, 1), false) == 13909);
+    assert(Date::new(2154, 7, 4).get_duration_in_days(Date::new(2000, 1, 1), false) == 56432);
+    assert(Date::new(2010, 10, 27).get_duration_in_days(Date::new(2000, 1, 1), false) == 3952);
+    assert(Date::new(2194, 9, 4).get_duration_in_days(Date::new(2000, 1, 1), false) == 71104);
+    assert(Date::new(2014, 7, 23).get_duration_in_days(Date::new(2000, 1, 1), false) == 5317);
+    assert(Date::new(2118, 12, 17).get_duration_in_days(Date::new(2000, 1, 1), false) == 43449);
+    assert(Date::new(2116, 9, 27).get_duration_in_days(Date::new(2000, 1, 1), false) == 42638);
+    assert(Date::new(2091, 9, 25).get_duration_in_days(Date::new(2000, 1, 1), false) == 33505);
+    assert(Date::new(2147, 11, 15).get_duration_in_days(Date::new(2000, 1, 1), false) == 54009);
+    assert(Date::new(2130, 7, 30).get_duration_in_days(Date::new(2000, 1, 1), false) == 47692);
+    assert(Date::new(2031, 12, 18).get_duration_in_days(Date::new(2000, 1, 1), false) == 11674);
+    assert(Date::new(2092, 1, 30).get_duration_in_days(Date::new(2000, 1, 1), false) == 33632);
+    assert(Date::new(2111, 7, 14).get_duration_in_days(Date::new(2000, 1, 1), false) == 40736);
+    assert(Date::new(2089, 11, 10).get_duration_in_days(Date::new(2000, 1, 1), false) == 32821);
+    assert(Date::new(2022, 10, 26).get_duration_in_days(Date::new(2000, 1, 1), false) == 8334);
+    assert(Date::new(2159, 7, 19).get_duration_in_days(Date::new(2000, 1, 1), false) == 58273);
+    assert(Date::new(2164, 8, 25).get_duration_in_days(Date::new(2000, 1, 1), false) == 60137);
+    assert(Date::new(2079, 4, 13).get_duration_in_days(Date::new(2000, 1, 1), false) == 28957);
+
+    assert(Date::new(2000, 1, 1).get_duration_in_days(Date::new(2017, 6, 18), false) == -6378);
+    assert(Date::new(2000, 1, 1).get_duration_in_days(Date::new(2179, 6, 6), false) == -0xffff);
+    assert(Date::new(2000, 1, 1).get_duration_in_days(Date::new(2019, 6, 6), false) == -7096);
+    assert(Date::new(2000, 12, 31).get_duration_in_days(Date::new(2001, 1, 1), false) == -1);
+    assert(Date::new(2000, 12, 31).get_duration_in_days(Date::new(2001, 1, 1), false) == -1);
+    assert(Date::new(2000, 1, 1).get_duration_in_days(Date::new(2001, 1, 1), false) == -366);
+    assert(Date::new(2023, 1, 1).get_duration_in_days(Date::new(2023, 1, 1), false) == 0);
+    assert(Date::new(2023, 1, 1).get_duration_in_days(Date::new(2023, 1, 15), false) == -14);
+    assert(Date::new(2023, 1, 1).get_duration_in_days(Date::new(2023, 2, 1), false) == -31);
+    assert(Date::new(2023, 1, 1).get_duration_in_days(Date::new(2023, 12, 31), false) == -364);
+    assert(Date::new(2023, 1, 1).get_duration_in_days(Date::new(2024, 1, 1), false) == -365);
+    assert(Date::new(2020, 1, 1).get_duration_in_days(Date::new(2024, 1, 1), false) == -1461);
+    assert(Date::new(2020, 3, 1).get_duration_in_days(Date::new(2024, 1, 1), false) == -1401);
+    assert(Date::new(2023, 12, 31).get_duration_in_days(Date::new(2024, 12, 31), false) == -366);
+    assert(Date::new(2023, 12, 31).get_duration_in_days(Date::new(2028, 12, 31), false) == -1827);
+    assert(Date::new(2023, 12, 31).get_duration_in_days(Date::new(2029, 12, 31), false) == -2192);
+    assert(Date::new(2000, 1, 1).get_duration_in_days(Date::new(2022, 10, 26), false) == -8334);
+    assert(Date::new(2000, 1, 1).get_duration_in_days(Date::new(2159, 7, 19), false) == -58273);
+    assert(Date::new(2000, 1, 1).get_duration_in_days(Date::new(2164, 8, 25), false) == -60137);
+    assert(Date::new(2000, 1, 1).get_duration_in_days(Date::new(2079, 4, 13), false) == -28957);
+
+    assert(Date::new(2000, 1, 1).get_duration_in_days(Date::new(2017, 6, 18), true) == 6378);
+    assert(Date::new(2000, 1, 1).get_duration_in_days(Date::new(2179, 6, 6), true) == 0xffff);
+    assert(Date::new(2000, 1, 1).get_duration_in_days(Date::new(2019, 6, 6), true) == 7096);
+    assert(Date::new(2000, 12, 31).get_duration_in_days(Date::new(2001, 1, 1), true) == 1);
+    assert(Date::new(2000, 12, 31).get_duration_in_days(Date::new(2001, 1, 1), true) == 1);
+    assert(Date::new(2000, 1, 1).get_duration_in_days(Date::new(2001, 1, 1), true) == 366);
+    assert(Date::new(2023, 1, 1).get_duration_in_days(Date::new(2023, 1, 1), true) == 0);
+    assert(Date::new(2023, 1, 1).get_duration_in_days(Date::new(2023, 1, 15), true) == 14);
+    assert(Date::new(2023, 1, 1).get_duration_in_days(Date::new(2023, 2, 1), true) == 31);
+    assert(Date::new(2023, 1, 1).get_duration_in_days(Date::new(2023, 12, 31), true) == 364);
+    assert(Date::new(2023, 1, 1).get_duration_in_days(Date::new(2024, 1, 1), true) == 365);
+    assert(Date::new(2020, 1, 1).get_duration_in_days(Date::new(2024, 1, 1), true) == 1461);
+    assert(Date::new(2020, 3, 1).get_duration_in_days(Date::new(2024, 1, 1), true) == 1401);
+    assert(Date::new(2023, 12, 31).get_duration_in_days(Date::new(2024, 12, 31), true) == 366);
+    assert(Date::new(2023, 12, 31).get_duration_in_days(Date::new(2028, 12, 31), true) == 1827);
+    assert(Date::new(2023, 12, 31).get_duration_in_days(Date::new(2029, 12, 31), true) == 2192);
+    assert(Date::new(2000, 1, 1).get_duration_in_days(Date::new(2022, 10, 26), true) == 8334);
+    assert(Date::new(2000, 1, 1).get_duration_in_days(Date::new(2159, 7, 19), true) == 58273);
+    assert(Date::new(2000, 1, 1).get_duration_in_days(Date::new(2164, 8, 25), true) == 60137);
+    assert(Date::new(2000, 1, 1).get_duration_in_days(Date::new(2079, 4, 13), true) == 28957);
 }
 
 #[test]
