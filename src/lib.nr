@@ -95,10 +95,10 @@ impl Date {
         Date::from_bytes_long_year(date_bytes)
     }
 
-    pub fn get_duration_in_days(self: Self, other: Self, absolute: bool) -> i32 {
-        let totalDuration: i32 = self.get_duration_between_years(other) as i32
-            + self.get_duration_between_months(other) as i32
-            + (self.day as i32 - other.day as i32);
+    pub fn get_duration_in_days(self: Self, other: Self, absolute: bool) -> i64 {
+        let totalDuration: i64 = self.get_duration_between_years(other)
+            + self.get_duration_between_months(other)
+            + (self.day as i64 - other.day as i64);
 
         if (totalDuration < 0) & absolute {
             -1 * totalDuration
@@ -182,8 +182,8 @@ impl Date {
         ((self.year % 4 == 0) & (self.year % 100 != 0)) | (self.year % 400 == 0)
     }
 
-    pub fn leap_year_count(year: u32) -> u32 {
-        (year / 4) - (year / 100) + (year / 400)
+    pub fn leap_year_count(year: u32) -> i32 {
+        (year / 4) as i32 - (year / 100) as i32 + (year / 400) as i32
     }
 
     pub fn get_days_in_month(self: Self, month: u8) -> u8 {
@@ -209,42 +209,46 @@ impl Date {
         }
     }
 
-    pub fn get_duration_between_months(self: Self, other: Self) -> i32 {
+    pub fn get_duration_between_months(self: Self, other: Self) -> i64 {
         assert(self.month >= 1 & self.month <= 12);
         assert(other.month >= 1 & other.month <= 12);
-        let mut duration: i32 = 0;
+        let mut duration: i64 = 0;
         if (self.month < other.month) {
             for month in 1..13 {
                 if month >= self.month & month < other.month {
-                    duration -= other.get_days_in_month(month) as i32;
+                    duration -= other.get_days_in_month(month) as i64;
                 }
             }
         } else {
             for month in 1..13 {
                 if month >= other.month & month < self.month {
-                    duration += self.get_days_in_month(month) as i32;
+                    duration += self.get_days_in_month(month) as i64;
                 }
             }
         }
         duration
     }
 
-    pub fn get_duration_between_years(self: Self, other: Self) -> i32 {
-        let mut duration: i32 = 0;
+    pub fn get_duration_between_years(self: Self, other: Self) -> i64 {
+        let mut duration: i64 = 0;
         if (self.year < other.year) {
-            let mut leap_year_count: u32 = Date::leap_year_count(other.year - 1) - Date::leap_year_count(self.year);
+            let mut leap_year_count: i32 =
+                Date::leap_year_count(other.year - 1) - Date::leap_year_count(self.year);
             if (other.is_leap_year() & other.month > 2) | self.is_leap_year() {
                 leap_year_count += 1;
             }
-            duration -= leap_year_count as i32 * 366;
-            duration -= (other.year as i32 - self.year as i32 - leap_year_count as i32) as i32 * 365;
+            duration -= leap_year_count as i64 * 366;
+            duration -=
+                (other.year as i64 - self.year as i64 - leap_year_count as i64) as i64 * 365;
         } else if (self.year > other.year) {
-            let mut leap_year_count: u32 = Date::leap_year_count(self.year - 1) - Date::leap_year_count(other.year);
+            let mut leap_year_count: i32 =
+                Date::leap_year_count(self.year - 1) - Date::leap_year_count(other.year);
             if (self.is_leap_year() & self.month > 2) | other.is_leap_year() {
                 leap_year_count += 1;
             }
-            duration += leap_year_count as i32 * 366;
-            duration += (self.year as i32 - other.year as i32 - leap_year_count as i32) as i32 * 365;
+            duration += leap_year_count as i64 * 366;
+            duration +=
+                (self.year as i64 - other.year as i64 - leap_year_count as i64) as i64 * 365;
         }
         duration
     }
