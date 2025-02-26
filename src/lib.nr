@@ -1,4 +1,4 @@
-use dep::std::{field::bn254::assert_gt, println};
+use dep::std::println;
 
 pub struct Date {
     day: u8,
@@ -96,9 +96,19 @@ impl Date {
     }
 
     pub fn get_duration_in_days(self: Self, other: Self, absolute: bool) -> i64 {
-        let totalDuration: i64 = self.get_duration_between_years(other)
-            + self.get_duration_between_months(other)
-            + (self.day as i64 - other.day as i64);
+        let mut duration_years = self.get_duration_between_years(other);
+        let mut duration_months = self.get_duration_between_months(other);
+        let mut duration_days = self.day as i64 - other.day as i64;
+        if (self.year < other.year) {
+            if (other.is_leap_year() & other.month > 2 & self.month > 2) {
+                duration_days -= 1;
+            }
+        } else if (self.year > other.year) {
+            if (self.is_leap_year() & self.month > 2 & other.month > 2) {
+                duration_days += 1;
+            }
+        }
+        let totalDuration: i64 = duration_years + duration_months + duration_days;
 
         if (totalDuration < 0) & absolute {
             -1 * totalDuration
@@ -234,7 +244,7 @@ impl Date {
         if (self.year < other.year) {
             let mut leap_year_count: i32 =
                 Date::leap_year_count(other.year - 1) - Date::leap_year_count(self.year);
-            if (other.is_leap_year() & other.month > 2) | self.is_leap_year() {
+            if self.is_leap_year() {
                 leap_year_count += 1;
             }
             duration -= leap_year_count as i64 * 366;
@@ -243,7 +253,7 @@ impl Date {
         } else if (self.year > other.year) {
             let mut leap_year_count: i32 =
                 Date::leap_year_count(self.year - 1) - Date::leap_year_count(other.year);
-            if (self.is_leap_year() & self.month > 2) | other.is_leap_year() {
+            if other.is_leap_year() {
                 leap_year_count += 1;
             }
             duration += leap_year_count as i64 * 366;
@@ -507,6 +517,9 @@ fn test_date_get_duration_in_days() {
     assert(Date::new(2023, 3, 1).get_duration_in_days(date, false) == 59);
     assert(Date::new(2023, 12, 31).get_duration_in_days(date, false) == 364);
     assert(Date::new(2024, 1, 1).get_duration_in_days(date, false) == 365);
+    assert(Date::new(2024, 2, 28).get_duration_in_days(date, false) == 365 + 31 + 27);
+    assert(Date::new(2024, 2, 29).get_duration_in_days(date, false) == 365 + 31 + 28);
+    assert(Date::new(2024, 3, 1).get_duration_in_days(date, false) == 365 + 31 + 29);
     assert(Date::new(2024, 12, 31).get_duration_in_days(date, false) == 365 + 365);
     assert(Date::new(2025, 1, 1).get_duration_in_days(date, false) == 365 + 366);
 
