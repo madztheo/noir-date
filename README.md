@@ -10,7 +10,7 @@ In your Nargo.toml file, add the following dependency:
 
 ```
 [dependencies]
-date = { tag = "main", git = "https://github.com/madztheo/noir-date.git" }
+date = { tag = "v0.5.0", git = "https://github.com/madztheo/noir-date.git" }
 ```
 
 ### Import the library
