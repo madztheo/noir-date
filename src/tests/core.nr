@@ -11,7 +11,7 @@ fn test_date_init() {
 
 #[test]
 fn test_date_from_bytes_short_year() {
-    let date = Date::from_bytes_short_year([50, 51, 49, 50, 49, 57], [50, 52]);
+    let date = Date::from_bytes_short_year([50, 51, 49, 50, 49, 57], Date::new(2024, 1, 1));
 
     assert(date.day == 19);
     assert(date.month == 12);
@@ -29,7 +29,7 @@ fn test_date_from_bytes_long_year() {
 
 #[test]
 fn test_date_from_str_short_year() {
-    let date = Date::from_str_short_year("231219", "24");
+    let date = Date::from_str_short_year("231219", Date::new(2024, 1, 1));
 
     assert(date.day == 19);
     assert(date.month == 12);

@@ -29,7 +29,7 @@ impl Date {
         date
     }
 
-    pub fn from_bytes_short_year(date: [u8; 6], threshold_year: [u8; 2]) -> Self {
+    pub fn from_bytes_short_year(date: [u8; 6], threshold_date: Date) -> Self {
         let firstYearDigit = get_number_from_utf8_code(date[0]);
         let secondYearDigit = get_number_from_utf8_code(date[1]);
 
@@ -45,11 +45,7 @@ impl Date {
 
         let day = firstDayDigit * 10 + secondDayDigit;
 
-        let currentYearFirstDigit = get_number_from_utf8_code(threshold_year[0]);
-        let currentYearSecondDigit = get_number_from_utf8_code(threshold_year[1]);
-
-        let mut currentYear: u32 =
-            currentYearFirstDigit as u32 * 10 + currentYearSecondDigit as u32;
+        let mut currentYear: u32 = threshold_date.year % 100;
 
         // This way we have a smooth 100 years period according to a threshold year
         // Taking the current year as threshold year (for birthdates for example)
@@ -89,9 +85,9 @@ impl Date {
         Self { day: day, month: month, year: year }
     }
 
-    pub fn from_str_short_year(date: str<6>, threshold_year: str<2>) -> Self {
+    pub fn from_str_short_year(date: str<6>, threshold_date: Date) -> Self {
         let date_bytes = date.as_bytes();
-        Date::from_bytes_short_year(date_bytes, threshold_year.as_bytes())
+        Date::from_bytes_short_year(date_bytes, threshold_date)
     }
 
     pub fn from_str_long_year(date: str<8>) -> Self {
