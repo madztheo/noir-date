@@ -149,10 +149,10 @@ impl Date {
         (best_year, best_start_day)
     }
 
-    pub fn from_timestamp_with_epoch(timestamp: u32, epoch_year: u32) -> Self {
-        let days = timestamp / SECONDS_IN_DAY;
-        let (year, year_start_day) = Date::estimate_start_day_and_year(days, epoch_year);
-        let day_of_year = days - year_start_day;
+    pub fn from_timestamp_with_epoch(timestamp: u64, epoch_year: u32) -> Self {
+        let days = timestamp / SECONDS_IN_DAY as u64;
+        let (year, year_start_day) = Date::estimate_start_day_and_year(days as u32, epoch_year);
+        let day_of_year = days as u32 - year_start_day;
 
         let is_leap = Date::is_leap_year(Date::new(year, 1, 1));
 
@@ -172,7 +172,7 @@ impl Date {
         Date::new(year, month as u8, day as u8)
     }
 
-    pub fn from_timestamp(timestamp: u32) -> Self {
+    pub fn from_timestamp(timestamp: u64) -> Self {
         Date::from_timestamp_with_epoch(timestamp, UNIX_EPOCH_YEAR)
     }
 
