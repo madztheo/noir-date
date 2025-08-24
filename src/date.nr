@@ -95,28 +95,28 @@ impl Date {
         Date::from_bytes_long_year(date_bytes)
     }
 
-    fn count_leap_years_since_unix_epoch(year: u32) -> u32 {
+    fn count_leap_years_since_epoch(year: u32, epoch_year: u32) -> u32 {
         let y = year - 1;
         let leaps_up_to_y = y / 4 - y / 100 + y / 400;
-        let leaps_up_to_1969 =
-            (UNIX_EPOCH_YEAR - 1) / 4 - (UNIX_EPOCH_YEAR - 1) / 100 + (UNIX_EPOCH_YEAR - 1) / 400;
-        leaps_up_to_y - leaps_up_to_1969
+        let leaps_up_to_epoch_year =
+            (epoch_year - 1) / 4 - (epoch_year - 1) / 100 + (epoch_year - 1) / 400;
+        leaps_up_to_y - leaps_up_to_epoch_year
     }
 
-    fn days_since_unix_epoch(year: u32) -> u32 {
-        365 * (year - UNIX_EPOCH_YEAR) + Date::count_leap_years_since_unix_epoch(year)
+    fn days_since_epoch(year: u32, epoch_year: u32) -> u32 {
+        365 * (year - epoch_year) + Date::count_leap_years_since_epoch(year, epoch_year)
     }
 
-    fn estimate_start_day_and_year(days: u32) -> (u32, u32) {
-        let first_guess_year = UNIX_EPOCH_YEAR + days / 365;
+    fn estimate_start_day_and_year(days: u32, epoch_year: u32) -> (u32, u32) {
+        let first_guess_year = epoch_year + days / 365;
 
-        let days_lower_bound = if first_guess_year > UNIX_EPOCH_YEAR {
-            Date::days_since_unix_epoch(first_guess_year - 1)
+        let days_lower_bound = if first_guess_year > epoch_year {
+            Date::days_since_epoch(first_guess_year - 1, epoch_year)
         } else {
             0
         };
-        let day_guess = Date::days_since_unix_epoch(first_guess_year);
-        let days_upper_bound = Date::days_since_unix_epoch(first_guess_year + 1);
+        let day_guess = Date::days_since_epoch(first_guess_year, epoch_year);
+        let days_upper_bound = Date::days_since_epoch(first_guess_year + 1, epoch_year);
 
         let use_lower_bound = (days >= days_lower_bound) & (days < day_guess);
         let use_upper_bound = days >= days_upper_bound;
@@ -149,9 +149,9 @@ impl Date {
         (best_year, best_start_day)
     }
 
-    pub fn from_timestamp(timestamp: u32) -> Self {
+    pub fn from_timestamp_with_epoch(timestamp: u32, epoch_year: u32) -> Self {
         let days = timestamp / SECONDS_IN_DAY;
-        let (year, year_start_day) = Date::estimate_start_day_and_year(days);
+        let (year, year_start_day) = Date::estimate_start_day_and_year(days, epoch_year);
         let day_of_year = days - year_start_day;
 
         let is_leap = Date::is_leap_year(Date::new(year, 1, 1));
@@ -170,6 +170,10 @@ impl Date {
 
         let day: u32 = day_of_year - days_at_month_start[(month - 1) as u32] + 1;
         Date::new(year, month as u8, day as u8)
+    }
+
+    pub fn from_timestamp(timestamp: u32) -> Self {
+        Date::from_timestamp_with_epoch(timestamp, UNIX_EPOCH_YEAR)
     }
 
     pub fn get_duration_in_days(self: Self, other: Self, absolute: bool) -> i64 {
@@ -270,9 +274,13 @@ impl Date {
         date_bytes.as_str_unchecked()
     }
 
-    pub fn to_timestamp(self: Self) -> u32 {
-        let days = self.get_duration_in_days(Date::new(UNIX_EPOCH_YEAR, 1, 1), true);
+    pub fn to_timestamp_with_epoch(self: Self, epoch_year: u32) -> u32 {
+        let days = self.get_duration_in_days(Date::new(epoch_year, 1, 1), true);
         days as u32 * SECONDS_IN_DAY
+    }
+
+    pub fn to_timestamp(self: Self) -> u32 {
+        self.to_timestamp_with_epoch(UNIX_EPOCH_YEAR)
     }
 
     pub fn is_leap_year(self: Self) -> bool {

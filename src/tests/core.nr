@@ -486,6 +486,22 @@ fn test_timestamp_to_date() {
 }
 
 #[test]
+fn test_timestamp_to_date_with_epoch() {
+    let seconds_between_1900_and_1970 = 2208988800;
+    let timestamp = 1752710400 + seconds_between_1900_and_1970; // 2025-07-17
+    let date = Date::from_timestamp_with_epoch(timestamp, 1900);
+    assert(date == Date::new(2025, 7, 17));
+}
+
+#[test]
+fn test_date_to_timestamp_with_epoch() {
+    let seconds_between_1900_and_1970 = 2208988800;
+    let date = Date::new(2025, 7, 17);
+    let timestamp = date.to_timestamp_with_epoch(1900);
+    assert(timestamp == 1752710400 + seconds_between_1900_and_1970);
+}
+
+#[test]
 fn test_timestamp_to_date_many_dates() {
     assert(Date::from_timestamp(0) == Date::new(1970, 1, 1));
     assert(Date::from_timestamp(86400) == Date::new(1970, 1, 2));
