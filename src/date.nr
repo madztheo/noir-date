@@ -1,8 +1,8 @@
 use std::cmp::Eq;
 use std::println;
 
-global UNIX_EPOCH_YEAR: u64 = 1970;
-global SECONDS_IN_DAY: u64 = 86400;
+global UNIX_EPOCH_YEAR: u32 = 1970;
+global SECONDS_IN_DAY: u32 = 86400;
 
 pub struct Date {
     pub day: u8,
@@ -95,7 +95,7 @@ impl Date {
         Date::from_bytes_long_year(date_bytes)
     }
 
-    fn count_leap_years_since_unix_epoch(year: u64) -> u64 {
+    fn count_leap_years_since_unix_epoch(year: u32) -> u32 {
         let y = year - 1;
         let leaps_up_to_y = y / 4 - y / 100 + y / 400;
         let leaps_up_to_1969 =
@@ -103,11 +103,11 @@ impl Date {
         leaps_up_to_y - leaps_up_to_1969
     }
 
-    fn days_since_unix_epoch(year: u64) -> u64 {
+    fn days_since_unix_epoch(year: u32) -> u32 {
         365 * (year - UNIX_EPOCH_YEAR) + Date::count_leap_years_since_unix_epoch(year)
     }
 
-    fn estimate_start_day_and_year(days: u64) -> (u64, u64) {
+    fn estimate_start_day_and_year(days: u32) -> (u32, u32) {
         let first_guess_year = UNIX_EPOCH_YEAR + days / 365;
 
         let days_lower_bound = if first_guess_year > UNIX_EPOCH_YEAR {
@@ -115,7 +115,7 @@ impl Date {
         } else {
             0
         };
-        let day_guess: u64 = Date::days_since_unix_epoch(first_guess_year);
+        let day_guess = Date::days_since_unix_epoch(first_guess_year);
         let days_upper_bound = Date::days_since_unix_epoch(first_guess_year + 1);
 
         let use_lower_bound = (days >= days_lower_bound) & (days < day_guess);
@@ -149,27 +149,27 @@ impl Date {
         (best_year, best_start_day)
     }
 
-    pub fn from_timestamp(timestamp: u64) -> Self {
+    pub fn from_timestamp(timestamp: u32) -> Self {
         let days = timestamp / SECONDS_IN_DAY;
         let (year, year_start_day) = Date::estimate_start_day_and_year(days);
         let day_of_year = days - year_start_day;
 
-        let is_leap = Date::is_leap_year(Date::new(year as u32, 1, 1));
+        let is_leap = Date::is_leap_year(Date::new(year, 1, 1));
 
-        let days_at_month_start: [u64; 13] = if is_leap {
+        let days_at_month_start: [u32; 13] = if is_leap {
             [0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366]
         } else {
             [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365]
         };
 
-        let mut month: u64 = 1;
+        let mut month: u32 = 1;
         for i in 0..12 {
             let advance = day_of_year >= days_at_month_start[i + 1];
             month = if advance { month + 1 } else { month };
         }
 
-        let day: u64 = day_of_year - days_at_month_start[(month - 1) as u32] + 1;
-        Date::new(year as u32, month as u8, day as u8)
+        let day: u32 = day_of_year - days_at_month_start[(month - 1) as u32] + 1;
+        Date::new(year, month as u8, day as u8)
     }
 
     pub fn get_duration_in_days(self: Self, other: Self, absolute: bool) -> i64 {
@@ -270,9 +270,9 @@ impl Date {
         date_bytes.as_str_unchecked()
     }
 
-    pub fn to_timestamp(self: Self) -> u64 {
-        let days = self.get_duration_in_days(Date::new(UNIX_EPOCH_YEAR as u32, 1, 1), true);
-        days as u64 * SECONDS_IN_DAY
+    pub fn to_timestamp(self: Self) -> u32 {
+        let days = self.get_duration_in_days(Date::new(UNIX_EPOCH_YEAR, 1, 1), true);
+        days as u32 * SECONDS_IN_DAY
     }
 
     pub fn is_leap_year(self: Self) -> bool {
