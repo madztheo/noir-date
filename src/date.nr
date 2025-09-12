@@ -274,12 +274,12 @@ impl Date {
         date_bytes.as_str_unchecked()
     }
 
-    pub fn to_timestamp_with_epoch(self: Self, epoch_year: u32) -> u32 {
+    pub fn to_timestamp_with_epoch(self: Self, epoch_year: u32) -> u64 {
         let days = self.get_duration_in_days(Date::new(epoch_year, 1, 1), true);
-        days as u32 * SECONDS_IN_DAY
+        days as u64 * SECONDS_IN_DAY as u64
     }
 
-    pub fn to_timestamp(self: Self) -> u32 {
+    pub fn to_timestamp(self: Self) -> u64 {
         self.to_timestamp_with_epoch(UNIX_EPOCH_YEAR)
     }
 
