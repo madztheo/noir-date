@@ -335,6 +335,14 @@ fn test_date_add_years() {
 }
 
 #[test]
+fn test_date_add_years_with_leap_year() {
+    let date = Date::new(2024, 2, 29);
+    // 2024 is a leap year, so adding 1 year should result in March 1st
+    // as February 29th doesn't exist in 2025
+    assert(date.add_years(1).eq(Date::new(2025, 3, 1)));
+}
+
+#[test]
 fn test_date_sub_years() {
     let date = Date::new(2023, 7, 14);
 
@@ -344,6 +352,14 @@ fn test_date_sub_years() {
     assert(date.sub_years(3).eq(Date::new(2020, 7, 14)));
     assert(date.sub_years(4).eq(Date::new(2019, 7, 14)));
     assert(date.sub_years(5).eq(Date::new(2018, 7, 14)));
+}
+
+#[test]
+fn test_date_sub_years_with_leap_year() {
+    let date = Date::new(2024, 3, 1);
+    // 2024 is a leap year, so subtracting 1 year should result in March 1st
+    // as February 29th doesn't exist in 2023
+    assert(date.sub_years(1).eq(Date::new(2023, 3, 1)));
 }
 
 #[test]
@@ -363,6 +379,32 @@ fn test_date_add_months() {
 
     assert(date.add_months(29).eq(Date::new(2025, 12, 14)));
     assert(date.add_months(30).eq(Date::new(2026, 1, 14)));
+}
+
+#[test]
+fn test_date_add_months_with_leap_year() {
+    let date = Date::new(2024, 2, 29);
+    // 2024 is a leap year, so adding 12 months (1 year) should result in March 1st
+    // as February 29th doesn't exist in 2025
+    assert(date.add_months(12).eq(Date::new(2025, 3, 1)));
+    assert(date.add_months(13).eq(Date::new(2025, 3, 29)));
+    assert(date.add_months(14).eq(Date::new(2025, 4, 29)));
+}
+
+#[test]
+fn test_date_add_months_edge_cases() {
+    // Test adding months to dates that don't exist in target month
+    let date = Date::new(2023, 1, 31);
+    assert(date.add_months(1).eq(Date::new(2023, 2, 28))); // Jan 31 + 1 month = Feb 28 (non-leap year)
+
+    let date2 = Date::new(2024, 1, 31);
+    assert(date2.add_months(1).eq(Date::new(2024, 2, 29))); // Jan 31 + 1 month = Feb 29 (leap year)
+
+    let date3 = Date::new(2023, 3, 31);
+    assert(date3.add_months(1).eq(Date::new(2023, 4, 30))); // Mar 31 + 1 month = Apr 30
+
+    let date4 = Date::new(2023, 5, 31);
+    assert(date4.add_months(1).eq(Date::new(2023, 6, 30))); // May 31 + 1 month = Jun 30
 }
 
 #[test]
@@ -387,6 +429,32 @@ fn test_date_sub_months() {
     assert(date.sub_months(41).eq(Date::new(2020, 2, 14)));
     assert(date.sub_months(42).eq(Date::new(2020, 1, 14)));
     assert(date.sub_months(43).eq(Date::new(2019, 12, 14)));
+}
+
+#[test]
+fn test_date_sub_months_with_leap_year() {
+    let date = Date::new(2024, 2, 29);
+    // 2024 is a leap year, so subtracting 12 months (1 year) should result in March 1st
+    // as February 29th doesn't exist in 2023
+    assert(date.sub_months(12).eq(Date::new(2023, 3, 1)));
+    assert(date.sub_months(13).eq(Date::new(2023, 1, 29)));
+    assert(date.sub_months(14).eq(Date::new(2022, 12, 29)));
+}
+
+#[test]
+fn test_date_sub_months_edge_cases() {
+    // Test subtracting months from dates that don't exist in target month
+    let date = Date::new(2023, 3, 31);
+    assert(date.sub_months(1).eq(Date::new(2023, 2, 28))); // Mar 31 - 1 month = Feb 28 (non-leap year)
+
+    let date2 = Date::new(2024, 3, 31);
+    assert(date2.sub_months(1).eq(Date::new(2024, 2, 29))); // Mar 31 - 1 month = Feb 29 (leap year)
+
+    let date3 = Date::new(2023, 5, 31);
+    assert(date3.sub_months(1).eq(Date::new(2023, 4, 30))); // May 31 - 1 month = Apr 30
+
+    let date4 = Date::new(2023, 8, 31);
+    assert(date4.sub_months(1).eq(Date::new(2023, 7, 31))); // Aug 31 - 1 month = Jul 31 (both have 31 days)
 }
 
 #[test]
@@ -424,6 +492,16 @@ fn test_date_add_days() {
 }
 
 #[test]
+fn test_date_add_days_with_leap_year() {
+    let date = Date::new(2024, 2, 29);
+    // 2024 is a leap year, so adding 366 days (1 year) should result in March 1st
+    // as February 29th doesn't exist in 2025
+    assert(date.add_days(365).eq(Date::new(2025, 2, 28)));
+    assert(date.add_days(366).eq(Date::new(2025, 3, 1)));
+    assert(date.add_days(367).eq(Date::new(2025, 3, 2)));
+}
+
+#[test]
 fn test_date_sub_days() {
     let date = Date::new(2023, 7, 14);
 
@@ -431,13 +509,13 @@ fn test_date_sub_days() {
     assert(date.sub_days(1).eq(Date::new(2023, 7, 13)));
     assert(date.sub_days(2).eq(Date::new(2023, 7, 12)));
 
-    assert(date.sub_days(17).eq(Date::new(2023, 6, 28)));
-    assert(date.sub_days(18).eq(Date::new(2023, 6, 27)));
-    assert(date.sub_days(19).eq(Date::new(2023, 6, 26)));
+    assert(date.sub_days(17).eq(Date::new(2023, 6, 27)));
+    assert(date.sub_days(18).eq(Date::new(2023, 6, 26)));
+    assert(date.sub_days(19).eq(Date::new(2023, 6, 25)));
 
-    assert(date.sub_days(31).eq(Date::new(2023, 6, 14)));
-    assert(date.sub_days(32).eq(Date::new(2023, 6, 13)));
-    assert(date.sub_days(33).eq(Date::new(2023, 6, 12)));
+    assert(date.sub_days(31).eq(Date::new(2023, 6, 13)));
+    assert(date.sub_days(32).eq(Date::new(2023, 6, 12)));
+    assert(date.sub_days(33).eq(Date::new(2023, 6, 11)));
 
     assert(date.sub_days(365).eq(Date::new(2022, 7, 14)));
     assert(date.sub_days(366).eq(Date::new(2022, 7, 13)));
@@ -460,6 +538,25 @@ fn test_date_sub_days() {
     assert(date.sub_days(365 * 6 + 366 * 2 - 1).eq(Date::new(2015, 7, 15)));
     assert(date.sub_days(365 * 6 + 366 * 2).eq(Date::new(2015, 7, 14)));
     assert(date.sub_days(365 * 6 + 366 * 2 + 1).eq(Date::new(2015, 7, 13)));
+}
+
+#[test]
+fn test_date_sub_days_with_leap_year() {
+    let mut date = Date::new(2024, 2, 29);
+    // 2024 is a leap year, so subtracting 366 days (1 year) should result in March 1st
+    // as February 29th doesn't exist in 2023
+    assert(date.sub_days(365).eq(Date::new(2023, 3, 1)));
+    assert(date.sub_days(366).eq(Date::new(2023, 2, 28)));
+    assert(date.sub_days(367).eq(Date::new(2023, 2, 27)));
+
+    assert(date.sub_days(365 * 4).eq(Date::new(2020, 3, 1)));
+    // Should fall back on the same day 4 years before as both 2024 and 2020 are leap years
+    assert(date.sub_days(365 * 4 + 1).eq(Date::new(2020, 2, 29)));
+    assert(date.sub_days(365 * 4 + 2).eq(Date::new(2020, 2, 28)));
+
+    assert(date.sub_days(365 * 4 + 366).eq(Date::new(2019, 3, 1)));
+    assert(date.sub_days(365 * 4 + 367).eq(Date::new(2019, 2, 28)));
+    assert(date.sub_days(365 * 4 + 368).eq(Date::new(2019, 2, 27)));
 }
 
 #[test]

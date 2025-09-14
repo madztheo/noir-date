@@ -103,12 +103,13 @@ impl Date {
         leaps_up_to_y - leaps_up_to_epoch_year
     }
 
-    fn days_since_epoch(year: u32, epoch_year: u32) -> u32 {
-        365 * (year - epoch_year) + Date::count_leap_years_since_epoch(year, epoch_year)
+    fn days_since_epoch(year: u32, epoch_year: u32) -> u64 {
+        365 * (year as u64 - epoch_year as u64)
+            + Date::count_leap_years_since_epoch(year, epoch_year) as u64
     }
 
-    fn estimate_start_day_and_year(days: u32, epoch_year: u32) -> (u32, u32) {
-        let first_guess_year = epoch_year + days / 365;
+    fn estimate_start_day_and_year(days: u64, epoch_year: u32) -> (u32, u64) {
+        let first_guess_year = (epoch_year as u64 + days / 365) as u32;
 
         let days_lower_bound = if first_guess_year > epoch_year {
             Date::days_since_epoch(first_guess_year - 1, epoch_year)
@@ -151,8 +152,8 @@ impl Date {
 
     pub fn from_timestamp_with_epoch(timestamp: u64, epoch_year: u32) -> Self {
         let days = timestamp / SECONDS_IN_DAY as u64;
-        let (year, year_start_day) = Date::estimate_start_day_and_year(days as u32, epoch_year);
-        let day_of_year = days as u32 - year_start_day;
+        let (year, year_start_day) = Date::estimate_start_day_and_year(days, epoch_year);
+        let day_of_year = (days - year_start_day) as u32;
 
         let is_leap = Date::is_leap_year(Date::new(year, 1, 1));
 
@@ -358,91 +359,165 @@ impl Date {
         duration
     }
 
+    fn check_for_leap_year_adjustment(year: u32, month: u8, day: u8) -> Self {
+        let needs_adjustment = (month == 2) & (day == 29) & !Date::new(year, 1, 1).is_leap_year();
+        if needs_adjustment {
+            Self { day: 1, month: 3, year: year }
+        } else {
+            Self { day: day, month: month, year: year }
+        }
+    }
+
+    fn to_days_since_year_one(self: Self) -> u64 {
+        // Calculate days from years
+        let y: u64 = self.year as u64 - 1;
+        let days_from_years = y * 365;
+
+        // Calculate leap years up to (year - 1)
+        let leap_years = y / 4 - y / 100 + y / 400;
+
+        // Get day of year for current date
+        let is_leap = self.is_leap_year();
+        let days_at_month_start: [u32; 13] = if is_leap {
+            [0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366]
+        } else {
+            [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365]
+        };
+
+        let day_of_year = days_at_month_start[(self.month - 1) as u32] + (self.day - 1) as u32;
+
+        days_from_years + leap_years + day_of_year as u64
+    }
+
+    fn from_days_since_year_one(days: u64) -> Self {
+        let first_guess_year = (1 + days / 365) as u32;
+
+        // Calculate days at the start of each candidate year
+        let days_lower_bound = if first_guess_year > 1 {
+            Date::days_since_epoch(first_guess_year - 1, 1)
+        } else {
+            0
+        };
+        let day_guess = Date::days_since_epoch(first_guess_year, 1);
+        let days_upper_bound = Date::days_since_epoch(first_guess_year + 1, 1);
+
+        // Determine which year the days fall into
+        let use_lower_bound = (days >= days_lower_bound) & (days < day_guess);
+        let use_upper_bound = days >= days_upper_bound;
+
+        let mut best_year = first_guess_year;
+        let mut best_start_day = day_guess;
+
+        best_year = if use_lower_bound {
+            first_guess_year - 1
+        } else {
+            best_year
+        };
+        best_start_day = if use_lower_bound {
+            days_lower_bound
+        } else {
+            best_start_day
+        };
+
+        best_year = if use_upper_bound {
+            first_guess_year + 1
+        } else {
+            best_year
+        };
+        best_start_day = if use_upper_bound {
+            days_upper_bound
+        } else {
+            best_start_day
+        };
+
+        // Calculate day of year
+        let day_of_year = (days - best_start_day) as u32;
+
+        // Determine month and day from day of year
+        let is_leap = Date::is_leap_year(Date::new(best_year, 1, 1));
+        let days_at_month_start: [u32; 13] = if is_leap {
+            [0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366]
+        } else {
+            [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365]
+        };
+
+        let mut month: u32 = 1;
+        for i in 0..12 {
+            let advance = day_of_year >= days_at_month_start[i + 1];
+            month = if advance { month + 1 } else { month };
+        }
+
+        let day = day_of_year - days_at_month_start[(month - 1) as u32] + 1;
+        Date::new(best_year, month as u8, day as u8)
+    }
+
     pub fn add_years(self: Self, years: u32) -> Self {
-        Self { day: self.day, month: self.month, year: self.year + years }
+        let mut newYear = self.year + years;
+        let mut newMonth = self.month;
+        let mut newDay = self.day;
+        Self::check_for_leap_year_adjustment(newYear, newMonth, newDay)
     }
 
     pub fn sub_years(self: Self, years: u32) -> Self {
-        Self { day: self.day, month: self.month, year: self.year - years }
+        let mut newYear = self.year - years;
+        let mut newMonth = self.month;
+        let mut newDay = self.day;
+        Self::check_for_leap_year_adjustment(newYear, newMonth, newDay)
     }
 
     pub fn add_months(self: Self, months: u32) -> Self {
         let mut newMonth = self.month as u32 + months;
         let mut newYear = self.year;
+        let mut newDay = self.day;
         let yearToAdd = (newMonth - 1) / 12;
         if newMonth > 12 {
             newYear += yearToAdd as u32;
             newMonth -= 12 * yearToAdd;
         }
-        Self { day: self.day, month: newMonth as u8, year: newYear }
+        if newDay > self.get_days_in_month(newMonth as u8) {
+            newDay = self.get_days_in_month(newMonth as u8);
+        }
+        Self::check_for_leap_year_adjustment(newYear, newMonth as u8, newDay)
     }
 
     pub fn sub_months(self: Self, months: u32) -> Self {
         let mut newMonth = self.month as i32 - months as i32;
         let mut newYear = self.year;
+        let mut newDay = self.day;
         if newMonth < 1 {
             let yearToSub = ((newMonth as i32 - 12 as i32) * -1) / 12;
             newYear -= yearToSub as u32;
             newMonth += 12 * yearToSub;
         }
-        Self { day: self.day, month: newMonth as u8, year: newYear }
+        if newDay > self.get_days_in_month(newMonth as u8) {
+            newDay = self.get_days_in_month(newMonth as u8);
+        }
+        Self::check_for_leap_year_adjustment(newYear, newMonth as u8, newDay)
     }
 
-    pub fn add_days(self: Self, days: u32) -> Self {
-        let mut newDay = self.day as u32 + days;
-        let mut newMonth = self.month as u32;
-        let mut newYear = self.year;
-        let mut date = Self { day: newDay as u8, month: newMonth as u8, year: newYear };
-        if newDay > self.get_days_in_month(self.month) as u32 {
-            let max_months = (newDay / 30) + 1;
-            let bound = self.month as u64 + max_months as u64;
-            for _ in self.month as u64..bound as u64 {
-                let days_in_month = date.get_days_in_month(newMonth as u8) as u32;
-                if newDay > days_in_month {
-                    newDay -= days_in_month;
-                    newMonth += 1;
-                    if newMonth > 12 {
-                        newYear += 1;
-                        newMonth = 1;
-                    }
-                    // We need to mutate the date object inside the loop
-                    // so we can use get_days_in_month properly
-                    date.day = newDay as u8;
-                    date.year = newYear;
-                    date.month = newMonth as u8;
-                }
-            }
-        }
-        date
+    pub fn add_days(self: Self, days: u64) -> Self {
+        // Convert current date to days since year 1
+        let current_days = self.to_days_since_year_one();
+
+        // Add the desired number of days
+        let new_total_days = current_days + days;
+
+        // Convert back to a date
+        Date::from_days_since_year_one(new_total_days)
     }
 
-    // Performance could be improved
-    pub fn sub_days(self: Self, days: u32) -> Self {
-        let mut newDay = self.day as i32 - days as i32;
-        let mut newMonth = self.month as i32;
-        let mut newYear = self.year;
-        let mut date = Self { day: newDay as u8, month: newMonth as u8, year: newYear };
-        if newDay < 1 {
-            let max_months = (self.day as u32 + days) / 30 + 1;
-            let bound = self.month as u64 + max_months as u64;
-            for _ in self.month as u64..bound as u64 {
-                let days_in_month = date.get_days_in_month(newMonth as u8) as i32;
-                if newDay < 1 {
-                    newDay += days_in_month;
-                    newMonth -= 1;
-                    if newMonth < 1 {
-                        newYear -= 1;
-                        newMonth = 12;
-                    }
-                    // We need to mutate the date object inside the loop
-                    // so we can use get_days_in_month properly
-                    date.day = newDay as u8;
-                    date.year = newYear;
-                    date.month = newMonth as u8;
-                }
-            }
-        }
-        date
+    pub fn sub_days(self: Self, days: u64) -> Self {
+        // Convert current date to days since year 1
+        let current_days = self.to_days_since_year_one();
+
+        // Ensure we don't go below year 1
+        assert(current_days >= days, "Cannot subtract more days than have passed since year 1");
+
+        // Subtract the desired number of days
+        let new_total_days = current_days - days;
+
+        // Convert back to a date
+        Date::from_days_since_year_one(new_total_days)
     }
 }
 
